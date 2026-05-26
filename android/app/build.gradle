@@ -1,0 +1,30 @@
+plugins {
+    id "com.android.application"
+}
+
+android {
+    namespace "com.starlitchat.app"
+    compileSdk 35
+
+    defaultConfig {
+        applicationId "com.starlitchat.app"
+        minSdk 23
+        targetSdk 35
+        versionCode 1
+        versionName "1.0"
+    }
+}
+
+def generatedAssetsDir = layout.buildDirectory.dir("generated/assets")
+
+tasks.register("copyWebAssets", Copy) {
+    from(rootProject.layout.projectDirectory.dir("..")) {
+        include "index.html"
+        include "styles.css"
+        include "app.js"
+    }
+    into(generatedAssetsDir.map { it.dir("www") })
+}
+
+android.sourceSets.main.assets.srcDir(generatedAssetsDir)
+preBuild.dependsOn("copyWebAssets")

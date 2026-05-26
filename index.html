@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Linguini</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Language learning controls">
+        <header class="brand">
+          <div class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+              <path d="M4 10 Q10 4, 16 10 T28 10" />
+              <path d="M4 16 Q10 10, 16 16 T28 16" />
+              <path d="M4 22 Q10 16, 16 22 T28 22" />
+            </svg>
+          </div>
+          <div>
+            <h1>Linguini</h1>
+            <p>a tangled little notebook for languages</p>
+          </div>
+        </header>
+
+        <nav class="tabs" aria-label="Workspace">
+          <button class="tab-btn active" type="button" data-view="plansView">Plans</button>
+          <button class="tab-btn" type="button" data-view="vocabView">Vocab</button>
+          <button class="tab-btn" type="button" data-view="roleplayView">Role-play</button>
+          <button class="tab-btn" type="button" data-view="charactersView">Characters</button>
+          <button class="tab-btn" type="button" data-view="settingsView">Models</button>
+        </nav>
+
+        <section class="panel compact">
+          <div class="panel-title">
+            <h2>Target</h2>
+          </div>
+          <label>
+            Language
+            <select id="languageSelect"></select>
+          </label>
+          <label>
+            Skill level
+            <select id="levelSelect">
+              <option>Absolute beginner</option>
+              <option>Beginner</option>
+              <option>Lower intermediate</option>
+              <option>Upper intermediate</option>
+              <option>Advanced</option>
+              <option>Heritage speaker</option>
+            </select>
+          </label>
+          <label>
+            Teaching style
+            <select id="pedagogyStyleSelect">
+              <option value="linguistic">Linguistic — IPA, glosses, terms</option>
+              <option value="layman">Plain — no jargon, English analogies</option>
+            </select>
+          </label>
+        </section>
+
+        <section class="panel compact">
+          <div class="panel-title">
+            <h2>Plan prompt</h2>
+          </div>
+          <textarea
+            id="planPromptInput"
+            rows="6"
+            placeholder="Example: I am upper intermediate in Russian, but I need to drill cases deeply."
+          ></textarea>
+          <button id="generatePlanBtn" class="primary-btn" type="button">Generate plan</button>
+        </section>
+
+        <section class="panel roster-panel">
+          <div class="panel-title">
+            <h2>Saved plans</h2>
+            <button id="newPlanBtn" class="icon-btn" type="button" title="Create blank plan">+</button>
+          </div>
+          <div id="planList" class="stack-list" aria-label="Saved language plans"></div>
+        </section>
+      </aside>
+
+      <main class="workspace">
+        <section id="plansView" class="view active">
+          <header class="workspace-header">
+            <div>
+              <p id="planKicker">Language plan</p>
+              <h2 id="planTitle">Create or select a plan</h2>
+            </div>
+            <div class="header-actions">
+              <button id="addLessonBtn" class="secondary-btn" type="button">Add lesson</button>
+              <button id="generateLessonBtn" class="secondary-btn" type="button">Generate lesson</button>
+              <button id="deletePlanBtn" class="danger-btn" type="button">Delete plan</button>
+            </div>
+          </header>
+
+          <section class="plan-layout">
+            <aside class="lesson-sidebar">
+              <div class="panel-title">
+                <h2>Lessons</h2>
+              </div>
+              <div id="lessonList" class="stack-list"></div>
+            </aside>
+
+            <article class="lesson-pane">
+              <div class="lesson-toolbar">
+                <div class="mode-toggle" role="tablist" aria-label="Lesson mode">
+                  <button id="modeStudyBtn" class="mode-btn active" type="button" role="tab">Study</button>
+                  <button id="modeEditBtn" class="mode-btn" type="button" role="tab">Edit</button>
+                </div>
+                <div class="lesson-toolbar-actions">
+                  <button id="startLessonPracticeBtn" class="secondary-btn" type="button">Practice this</button>
+                  <button id="regenerateLessonBtn" class="secondary-btn" type="button">Regenerate</button>
+                  <button id="saveLessonBtn" class="primary-btn" type="button">Save lesson</button>
+                  <button id="deleteLessonBtn" class="danger-btn" type="button">Delete lesson</button>
+                </div>
+              </div>
+
+              <div id="lessonStudyContainer" class="lesson-study"></div>
+
+              <div id="lessonEditContainer" class="lesson-edit" style="display: none;">
+                <section class="edit-block">
+                  <h3>Plan</h3>
+                  <div class="form-grid two">
+                    <label>
+                      Plan title
+                      <input id="planTitleInput" type="text" />
+                    </label>
+                    <label>
+                      Focus
+                      <input id="planFocusInput" type="text" placeholder="Cases, travel speaking, literacy..." />
+                    </label>
+                  </div>
+                  <label>
+                    Plan notes
+                    <textarea id="planNotesInput" rows="3"></textarea>
+                  </label>
+                </section>
+
+                <section class="edit-block">
+                  <h3>Lesson basics</h3>
+                  <div class="form-grid two">
+                    <label>
+                      Lesson title
+                      <input id="lessonTitleInput" type="text" />
+                    </label>
+                    <label>
+                      Grammar concept
+                      <input id="lessonGrammarInput" type="text" />
+                    </label>
+                  </div>
+                  <label>
+                    Description (shown at top of the lesson and used as the contract when generating the full lesson)
+                    <textarea id="lessonDescriptionInput" rows="3" placeholder="2-3 sentences naming the specific subtopics, forms, and use cases."></textarea>
+                  </label>
+                </section>
+
+                <section class="edit-block">
+                  <div class="edit-block-head">
+                    <h3>Sections</h3>
+                    <button id="addSectionBtn" class="secondary-btn small" type="button">+ Add section</button>
+                  </div>
+                  <div id="lessonSectionsContainer" class="edit-rows"></div>
+                </section>
+
+                <section class="edit-block">
+                  <div class="edit-block-head">
+                    <h3>Vocabulary</h3>
+                    <button id="addVocabRowBtn" class="secondary-btn small" type="button">+ Add word</button>
+                  </div>
+                  <div id="lessonVocabRows" class="edit-rows"></div>
+                </section>
+
+                <section class="edit-block">
+                  <div class="edit-block-head">
+                    <h3>Exercises</h3>
+                    <button id="addExerciseBtn" class="secondary-btn small" type="button">+ Add exercise</button>
+                  </div>
+                  <div id="lessonExerciseRows" class="edit-rows"></div>
+                </section>
+              </div>
+            </article>
+          </section>
+        </section>
+
+        <section id="vocabView" class="view">
+          <header class="workspace-header">
+            <div>
+              <p>Vocab bank</p>
+              <h2>Every word, every lesson</h2>
+            </div>
+            <div class="header-actions">
+              <button id="vocabAddBtn" class="primary-btn small" type="button">+ Add word</button>
+              <input id="vocabSearchInput" type="search" placeholder="Search words, translations, IPA..." class="vocab-search" />
+            </div>
+          </header>
+          <form id="vocabAddForm" class="vocab-add-form" hidden>
+            <label>Language <select id="vocabAddLanguage"></select></label>
+            <label>Word <input id="vocabAddTerm" type="text" required /></label>
+            <label>Translation <input id="vocabAddTranslation" type="text" /></label>
+            <label>IPA <input id="vocabAddIpa" type="text" /></label>
+            <label>Part of speech <input id="vocabAddPos" type="text" /></label>
+            <label class="wide">Example sentence <input id="vocabAddExample" type="text" /></label>
+            <div class="vocab-add-actions">
+              <button id="vocabAddSaveBtn" class="primary-btn small" type="submit">Save word</button>
+              <button id="vocabAddCancelBtn" class="secondary-btn small" type="button">Cancel</button>
+            </div>
+          </form>
+          <div class="vocab-meta">
+            <span id="vocabCountLabel" class="muted">0 words</span>
+          </div>
+          <div id="vocabBankList" class="vocab-bank"></div>
+        </section>
+
+        <section id="roleplayView" class="view">
+          <header class="workspace-header">
+            <div>
+              <p id="chatKicker">Role-play practice</p>
+              <h2 id="chatTitle">Choose a character and scenario</h2>
+            </div>
+            <div class="header-actions">
+              <button id="newChatBtn" class="secondary-btn" type="button">New chat</button>
+              <button id="saveScenarioBtn" class="secondary-btn" type="button">Save scenario</button>
+            </div>
+          </header>
+
+          <nav id="chatTabs" class="chat-tabs" aria-label="Past chats"></nav>
+
+          <section class="practice-setup">
+            <label>
+              Character
+              <select id="characterSelect"></select>
+            </label>
+            <label>
+              Scenario
+              <select id="scenarioSelect"></select>
+            </label>
+            <label>
+              Difficulty
+              <select id="difficultySelect">
+                <option>A1 survival</option>
+                <option>A2 simple conversation</option>
+                <option>B1 independent</option>
+                <option>B2 nuanced</option>
+                <option>C1 natural</option>
+              </select>
+            </label>
+            <label>
+              Test focus
+              <input id="testFocusInput" type="text" placeholder="Past tense, dative case, food vocabulary..." />
+            </label>
+            <label class="wide">
+              Scenario details
+              <textarea id="scenarioText" rows="4"></textarea>
+            </label>
+          </section>
+
+          <section id="messages" class="messages" aria-live="polite"></section>
+          <form id="chatForm" class="composer">
+            <textarea id="messageInput" rows="1" placeholder="Reply in your target language..." required></textarea>
+            <button id="sendBtn" class="primary-btn" type="submit">Send</button>
+          </form>
+        </section>
+
+        <section id="charactersView" class="view">
+          <header class="workspace-header">
+            <div>
+              <p>Character lab</p>
+              <h2>Build people to talk to</h2>
+            </div>
+            <button id="newCharacterBtn" class="primary-btn" type="button">New character</button>
+          </header>
+          <section class="split-layout">
+            <div id="characterList" class="stack-list"></div>
+            <article class="editor-panel">
+              <label>
+                Name
+                <input id="characterNameInput" type="text" />
+              </label>
+              <label>
+                Role / source
+                <input id="characterRoleInput" type="text" />
+              </label>
+              <label>
+                Personality
+                <textarea id="characterPersonalityInput" rows="5"></textarea>
+              </label>
+              <label>
+                Teaching style
+                <textarea id="characterTeachingInput" rows="5"></textarea>
+              </label>
+              <div class="lesson-actions">
+                <button id="saveCharacterBtn" class="primary-btn" type="button">Save character</button>
+                <button id="deleteCharacterBtn" class="danger-btn" type="button">Delete character</button>
+              </div>
+            </article>
+          </section>
+        </section>
+
+        <section id="settingsView" class="view">
+          <header class="workspace-header">
+            <div>
+              <p>Model routing</p>
+              <h2>Wire up the brains</h2>
+            </div>
+            <div class="header-actions">
+              <button id="testConnectionBtn" class="secondary-btn" type="button">Test chat route</button>
+              <button id="saveRoutesBtn" class="primary-btn" type="button">Save settings</button>
+              <span id="saveRoutesStatus" class="save-status" aria-live="polite"></span>
+            </div>
+          </header>
+          <section class="settings-grid">
+            <form class="panel compact" onsubmit="event.preventDefault(); return false;">
+              <div class="panel-title">
+                <h2>Plan outline</h2>
+              </div>
+              <label>Preset <select class="route-preset" data-kind="planner"></select></label>
+              <label>Endpoint <input id="plannerEndpointInput" type="url" /></label>
+              <label>Model <input id="plannerModelInput" type="text" /></label>
+              <label>API key, optional <input id="plannerKeyInput" type="password" autocomplete="off" /></label>
+              <button class="apply-to-all secondary-btn small" data-kind="planner" type="button">Apply to all routes</button>
+            </form>
+            <form class="panel compact" onsubmit="event.preventDefault(); return false;">
+              <div class="panel-title">
+                <h2>Lesson generation</h2>
+              </div>
+              <label>Preset <select class="route-preset" data-kind="lesson"></select></label>
+              <label>Endpoint <input id="lessonEndpointInput" type="url" /></label>
+              <label>Model <input id="lessonModelInput" type="text" /></label>
+              <label>API key, optional <input id="lessonKeyInput" type="password" autocomplete="off" /></label>
+            </form>
+            <form class="panel compact" onsubmit="event.preventDefault(); return false;">
+              <div class="panel-title">
+                <h2>Quiz & scenario</h2>
+              </div>
+              <label>Preset <select class="route-preset" data-kind="practice"></select></label>
+              <label>Endpoint <input id="practiceEndpointInput" type="url" /></label>
+              <label>Model <input id="practiceModelInput" type="text" /></label>
+              <label>API key, optional <input id="practiceKeyInput" type="password" autocomplete="off" /></label>
+            </form>
+            <form class="panel compact" onsubmit="event.preventDefault(); return false;">
+              <div class="panel-title">
+                <h2>Role-play chat</h2>
+              </div>
+              <label>Preset <select class="route-preset" data-kind="chat"></select></label>
+              <label>Endpoint <input id="chatEndpointInput" type="url" /></label>
+              <label>Model <input id="chatModelInput" type="text" /></label>
+              <label>API key, optional <input id="chatKeyInput" type="password" autocomplete="off" /></label>
+            </form>
+            <form class="panel compact" onsubmit="event.preventDefault(); return false;">
+              <div class="panel-title">
+                <h2>Error checking</h2>
+              </div>
+              <label>Preset <select class="route-preset" data-kind="correction"></select></label>
+              <label>Endpoint <input id="correctionEndpointInput" type="url" /></label>
+              <label>Model <input id="correctionModelInput" type="text" /></label>
+              <label>API key, optional <input id="correctionKeyInput" type="password" autocomplete="off" /></label>
+            </form>
+          </section>
+          <section class="panel compact">
+            <h2>Recommended setup</h2>
+            <p class="muted">
+              Picking the Anthropic preset enables native Claude support — your Claude API key works directly (the app translates the OpenAI-format request into Anthropic's schema and back). LM Studio, OpenAI, Google Gemini (via the <code>/v1beta/openai/</code> compat layer), DeepSeek, Kimi/Moonshot, and OpenRouter all work out of the box.
+            </p>
+            <p class="muted">
+              Common split: a strong API model (Claude / GPT) for lesson generation, a fast local model (LM Studio Gemma) for chat and correction. Plan outline is short, so any model works there.
+            </p>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <div id="loadingBadge" class="loading-badge" role="status" aria-live="polite" hidden>
+      <span class="loading-dot" aria-hidden="true"></span>
+      <span id="loadingBadgeText">Working...</span>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
