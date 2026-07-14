@@ -1,262 +1,52 @@
 # Linguini
 
-A tangled little notebook for languages — a single-user, local-first language-learning app with structured lessons, an in-lesson tutor chat, role-play practice with character chatbots, and a global vocab bank. Runs as a web app on a local server, or as a packaged Android WebView.
+A local-first, AI-powered language-learning platform — structured lesson generation, an embedded tutor, role-play chat practice, and cross-device sync, built from scratch with no frontend framework.
 
-Linguini routes its LLM calls to whichever models you configure. Bring your own keys (Claude, OpenAI, Gemini, DeepSeek, Kimi, OpenRouter) or run everything against a local LM Studio / Ollama instance — five separate routes let you mix and match.
+**Live demo:** <https://linguini-16g.pages.dev> — try the sample lessons with zero setup, or add any LLM API key (or a local model) in the Models tab to generate your own.
 
 ---
 
-## Run on web
+## What it does
+
+- **Plan generation** — one prompt (*"Advanced Korean for TOPIK II"*) becomes a 20–30 lesson curriculum with per-lesson grammar concepts and starter vocab.
+- **Full lesson pages** — each lesson expands on demand into grammar sections with inline examples and translations, a vocabulary table with IPA, reference alphabet charts for phonetic lessons (Hangul, hiragana, Cyrillic...), and exercises marked by an AI checker.
+- **Practice** — every lesson ships a role-play scenario that seeds a chat with a character bot; each user message is answered in character *and* run through a separate correction model.
+- **Tutor** — a per-lesson Q&A chat embedded in the page.
+- **Vocab bank** — every word from every lesson, aggregated, searchable, linked back to its source.
+- **Multilingual UI** — English, 日本語, 繁體中文, 简体中文, 한국어, Español. The UI language also steers generation: explanations and corrections are written in it while the target language stays untouched.
+- **Accounts & sync (optional)** — sign in to sync all state across web and Android; skip it and everything stays on-device.
+
+## Bring your own model
+
+Five independent LLM routes — plan outline, lesson body, quiz/scenario, role-play chat, error checking — each pointing at any provider: Claude, OpenAI, Gemini, DeepSeek, Kimi, OpenRouter, or a local LM Studio / Ollama instance. Heavy lifting can go to a strong model while per-message correction runs on something small and fast.
+
+## Technical highlights
+
+- **Zero-framework frontend.** Vanilla JS/HTML/CSS, no build step, no runtime dependencies. State → render functions → DOM, done by hand.
+- **Whole backend in one stdlib file.** `server.py` (pure Python, no pip installs) serves the app, persists state, and proxies LLM calls so browser CORS never gets in the way.
+- **Deliberately simple storage.** The entire app state is one JSON document in SQLite, with a human-readable JSON mirror that doubles as an automatic backup/restore path. Single-user app; a relational schema would buy nothing.
+- **Hosted flavor.** The same frontend deploys as static files on Cloudflare Pages, with a single Pages Function replicating the LLM proxy.
+- **Sync done small.** Supabase email auth + one row per user guarded by row-level security; last-write-wins with debounced pushes and pull-on-focus. No sync framework.
+- **Provider abstraction in code, not a library.** OpenAI-compatible wire format by default, with in-code translation to Anthropic's Messages API (system promotion, auth-header style, response shape).
+- **Resilient generation.** A tolerant JSON repair pass recovers truncated LLM output — partial-but-valid lessons instead of hard errors.
+- **Prompt-enforced pedagogy.** A per-language script policy (native script vs. romanization by learner level) and a UI-language directive are injected into every prompt builder.
+- **i18n at 310 keys × 6 locales**, dictionary-driven with scripted completeness checks.
+- **Android.** A WebView wrapper bundles the same web files into an APK, with a small in-process Java HTTP server standing in for `server.py` (persistence via SharedPreferences, same LLM proxy contract).
+
+## Run it locally
 
 ```sh
-python3 server.py
+python3 server.py    # http://127.0.0.1:5173 — Python stdlib only, nothing to install
 ```
 
-Open <http://127.0.0.1:5173>.
-
-That's the whole setup. The server is pure Python stdlib (no `pip install` step) — it serves the static frontend, persists state to SQLite, and proxies LLM requests so browser CORS isn't a problem.
-
-> **macOS Python from python.org users:** if outbound HTTPS to Claude/OpenAI fails with `502 Bad Gateway`, your Python doesn't have a CA bundle installed. server.py tries certifi as a fallback automatically. If it can't find any bundle, run `/Applications/Python\ 3.12/Install\ Certificates.command` once.
-
----
-
-## Host it online (free, Cloudflare Pages)
-
-The frontend deploys as static files plus one Pages Function (`functions/api/chat.js`) that replicates server.py's LLM proxy, so every provider works from the hosted site exactly like on localhost.
-
-One-time setup (free Cloudflare account):
-
-```sh
-npx wrangler login
-npx wrangler pages project create linguini
-```
-
-Then every deploy is:
-
-```sh
-./deploy.sh
-```
-
-The script stages only the web files into `dist/` — `server.py`, `android/`, and especially `data/` (your saved state and API keys) are never uploaded. Your site lands at `https://linguini.pages.dev` (or similar).
-
-Notes for the hosted site:
-
-- **State** lives in each browser's localStorage, or in your account if you sign in (see below). There is no `/api/state` server.
-- **Remote providers** (Claude, OpenAI, ...) are proxied through the Pages Function — no CORS issues, keys still sent per-request from your browser.
-- **Local models**: the hosted page calls `http://127.0.0.1:1234` directly from your browser (localhost is exempt from mixed-content blocking). Enable **CORS** in LM Studio's server settings for this to work.
-
----
-
-## Accounts & sync (free, Supabase)
-
-On first visit a sign-in / register page offers to set up sync — skip it and Linguini stays fully local. The account button next to the globe (or the Models tab) reopens it later. Signing in syncs everything — plans, lessons, vocab, chats, characters, and your API keys — across devices (web + Android). Signed out, everything stays in localStorage on the device.
-
-One-time setup (free Supabase account):
-
-1. Create a project at [supabase.com](https://supabase.com).
-2. **Authentication → Sign In / Up → Email**: turn **off** "Confirm email" (otherwise sign-up requires an email round-trip).
-3. **SQL Editor** → paste and run:
-
-   ```sql
-   create table public.app_state (
-     user_id uuid primary key references auth.users (id) on delete cascade,
-     state jsonb not null,
-     updated_at timestamptz not null default now()
-   );
-   alter table public.app_state enable row level security;
-   create policy "Users manage own state" on public.app_state
-     for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
-   ```
-
-4. **Settings → API**: copy the **Project URL** and the **anon public** key into the two constants at the top of `sync.js`. Both are safe to commit — row-level security is the actual boundary; each user can only read/write their own row.
-
-How sync behaves: last write wins. The app pulls your row on boot, after sign-in, and when the tab regains focus; it pushes (debounced ~1.5 s) after every change. On first sign-in from a device, an existing cloud copy wins; if there is none, the device's local data is uploaded. Your API keys are part of the synced state — that's what makes your model routes work instantly on your phone.
-
-> Supabase's free tier pauses projects after about a week of inactivity. Nothing is lost — restore it with one click in their dashboard.
-
----
-
-## UI language
-
-The **globe button** at the top right switches the entire interface between English, 日本語, 繁體中文, 简体中文, 한국어, and Español (hover to expand). It also steers generation: lesson explanations, exercise instructions, translations, tutor answers, and corrections are written in your UI language, while the target language being taught (and the JSON wire format) stays untouched. Language names in the target-language dropdown are shown in your UI language too (the stored values that feed the prompts stay English), and the UI language itself is dropped from the list. Default characters and scenarios display translated until you edit them.
-
----
-
-## Configure your models
-
-Open the **Models** tab. There are five routes; each can point to a different provider:
-
-| Route | Used by | Suggested setup |
-| --- | --- | --- |
-| **Plan outline** | New-plan generation (lesson titles + concepts) | Any small/fast model — output is tiny |
-| **Lesson generation** | Full lesson body (sections, vocab, alphabet) | Your strongest model — this does the heavy lifting |
-| **Quiz & scenario** | Exercises + practice scenario | Mid-tier or same as lesson |
-| **Role-play chat** | Character chatbot + lesson tutor Q&A | Conversational model, can be local |
-| **Error checking** | Answer/correction checking | Small fast model — runs after every chat message |
-
-Each panel has a **Preset** dropdown that auto-fills endpoint and a sensible default model:
-
-- **LM Studio** — `http://127.0.0.1:1234/v1/chat/completions`
-- **OpenAI** — `https://api.openai.com/v1/chat/completions`
-- **Anthropic Claude** — native `https://api.anthropic.com/v1/messages` (translation handled in code; no proxy needed)
-- **OpenRouter** — `https://openrouter.ai/api/v1/chat/completions` (one key, every model)
-- **Google Gemini** — `https://generativelanguage.googleapis.com/v1beta/openai/chat/completions`
-- **DeepSeek** — `https://api.deepseek.com/v1/chat/completions`
-- **Kimi / Moonshot** — `https://api.moonshot.ai/v1/chat/completions`
-
-Each panel also has **Apply to all routes** — fill out one panel and clone it to the rest with one click. Hit **Save settings** when you're done.
-
----
-
-## Plans & lessons
-
-Until you create your first plan, the main view shows a getting-started guide plus three sample lessons (Spanish ser/estar, hiragana with an alphabet chart, ordering coffee in Korean) — click one to see a finished lesson with no setup.
-
-1. Pick a target language and skill level in the left sidebar.
-2. Type a one-line plan prompt (e.g. *"Advanced Korean for TOPIK II Level 6"*) and hit **Generate plan**.
-3. You get back a plan with 20–30 lesson outlines — each has a title, a grammar concept (the tag), a 2-3 sentence description, and a few starter words.
-
-Click any lesson in the sidebar to open it. Lessons live in two modes:
-
-**Study mode** is the reading view:
-
-- **Stub view** (before expansion): description + starter vocab + a *Generate full lesson* button.
-- **Expanded view** (after expansion):
-  - A reference alphabet chart at the top if it's a phonetic / alphabet lesson (Hangul, hiragana, Cyrillic, etc.)
-  - Multiple sections — each rule introduced with an inline example in the target language plus translation (no batched "examples" section at the end)
-  - Vocabulary table with IPA, part of speech, example sentences
-  - Exercises — each with a textarea where you type your answer and a **Check** button that runs the answer through the correction route. Returns a green "Nice." stamp or a coral "Not quite." with a friendly correction.
-  - A purple **Practice scenario** card with a *Start role-play* button that jumps to a fresh chat seeded with the scenario.
-  - An **Ask the tutor** panel — a chat embedded in the lesson, conversation persists per-lesson.
-
-**Edit mode** lets you hand-tune any field: lesson title, grammar concept, description, sections, vocab rows, exercises.
-
-### Generation flow
-
-Lesson expansion runs in two LLM calls:
-
-1. **Lesson body** (lesson route) — intro, sections, vocab, alphabet. Awaits, then renders so you can start reading.
-2. **Exercises + scenario** (quiz/scenario route) — fires in the background; an italic *"Building exercises..."* placeholder sits where they'll go. When it returns, exercises appear and the scenario card slides in.
-
-**Regenerate** does the same two phases (lesson route first, then quiz route) and replaces old exercises/scenario with fresh ones. You can optionally provide a refinement note (e.g. *"more focus on -seru/-saseru contrasts"*) that's appended to the prompt.
-
-### Script policy
-
-Linguini enforces a per-language script policy in every prompt:
-
-- Latin-alphabet languages: no-op.
-- Non-Latin scripts at **Absolute beginner / Beginner**: native script with brief romanization in parens on first encounter.
-- Non-Latin scripts at **Lower intermediate or above**: native script only. **No romaji, no pinyin, no Jyutping, no Romanized Korean.** IPA still allowed in vocab/sound sections.
-- Hints in exercises are suppressed at beginner levels (would make quizzes trivial).
-
----
-
-## Vocab bank
-
-The **Vocab** tab aggregates every vocab word from every lesson in every plan, grouped by language, searchable. Each row shows the word, IPA, translation, example, and a clickable link back to its source lesson.
-
-- Click **+ Add word** to add a standalone vocab entry not tied to a lesson (language dropdown, term, translation, IPA, POS, example).
-- Click **×** on any row to delete it (removes from its source lesson or from your saved-words list).
-
----
-
-## Role-play practice
-
-The **Role-play** tab is a multi-chat workspace. Each chat is its own session with its own language, character, scenario, scenario text, test focus, difficulty, and message history.
-
-- The **chat tabs** bar sits above the practice setup. "+ New chat" creates a fresh session. Click any past chat to load it. "×" deletes (with confirm).
-- **Practice this** on a lesson always creates a *new* chat with that lesson's language, the lesson's scenario (or a generated fallback), `testFocus = lesson.grammar`, and difficulty set from the plan level (Absolute beginner → A1, Lower intermediate → B1, etc.). Difficulty stays editable.
-- Each user message runs two LLM calls: one to the character (chat route), one to the correction model (correction route). Corrections only appear if there's a real, useful error.
-
-### Characters lab
-
-The **Characters** tab is a small CRUD for character chatbots — name, role, personality, teaching style. Three friendly defaults ship: Mira (warm tutor), Ren (cafe role-play), Sana (grammar archivist). Add your own; switch the active character per-chat from the setup form.
-
----
-
-## Storage
-
-Linguini uses SQLite from Python's standard library — no `pip install`, no database service, no migrations.
-
-- **`data/linguini.sqlite3`** — single-row key/value store. The entire app state (plans, lessons, vocab, savedWords, chats, characters, scenarios, model routes) is one JSON document under the `app_state` key.
-- **`data/app-state.json`** — human-readable mirror, rewritten on every save. Grep this when you want to inspect or back up.
-- **localStorage** — browser-side fallback if the server isn't running.
-
-**Auto-restore on boot:** if `linguini.sqlite3` is missing or empty (e.g., disk loss, manual deletion), startup reads the JSON mirror back into the database. If both are gone, it falls back to a legacy `lumalingua.sqlite3` if one is still around. The mirror is the backup.
-
-**Why one JSON blob?** The app is single-user and the data is small enough that a relational schema buys nothing. Backing up = `cp data/linguini.sqlite3 backup.sqlite3`.
-
----
-
-## Android
-
-The `android/` directory has a WebView wrapper that bundles the same HTML/CSS/JS into an APK. It includes a small in-process Java HTTP server (`StarlitLocalServer.java`) that handles state persistence (via SharedPreferences) and LLM proxying — the same `X-LLM-Auth-Style: anthropic` header is honoured, so Claude direct works on Android too.
-
-Build the debug APK:
-
-```sh
-cd android
-./build-apk.sh
-```
-
-Output:
+## Layout
 
 ```
-android/app/build/outputs/apk/debug/app-debug.apk
+├── index.html / styles.css / app.js   # the whole frontend (paper-notebook theme)
+├── i18n.js                            # 6-locale dictionary + t()
+├── sync.js                            # Supabase auth + cross-device sync
+├── server.py                          # static + state + LLM proxy (stdlib)
+├── functions/api/chat.js              # Cloudflare Pages Function: hosted proxy
+├── deploy.sh                          # stage + deploy to Cloudflare Pages
+└── android/                           # WebView wrapper + in-process Java server
 ```
-
-To connect Android to a local LM Studio on your laptop:
-
-1. Put phone and computer on the same Wi-Fi.
-2. Start LM Studio's OpenAI-compatible server with LAN access enabled.
-3. Find your computer's LAN IP (`ifconfig | grep "inet "` on macOS).
-4. In the Android app's Models tab, set the relevant route's endpoint to:
-   ```
-   http://YOUR-LAN-IP:1234/v1/chat/completions
-   ```
-
-For API providers (Claude/OpenAI/etc.), no LAN config needed — Android reaches them directly over HTTPS.
-
----
-
-## Routes, providers, and the proxy
-
-When you submit a generation request:
-
-1. The frontend builds a JSON body — OpenAI Chat Completions format by default. If the configured endpoint is `api.anthropic.com`, the frontend translates: system messages get moved into a top-level `system` field, `max_tokens: 8192` is set (Anthropic requires it), and `temperature` defaults to `1.0` if unset.
-2. The browser POSTs to `/api/chat?target=<endpoint>` with `X-LLM-API-Key` and `X-LLM-Auth-Style` headers.
-3. `server.py` (or the Android local server) sees `X-LLM-Auth-Style: anthropic` and sends `x-api-key` + `anthropic-version` headers; otherwise it sends `Authorization: Bearer`.
-4. Response is parsed accordingly — `content[0].text` for Anthropic, `choices[0].message.content` for OpenAI-compat.
-5. The proxy also runs a tolerant JSON repair pass: if a generation truncates mid-lesson, the parser finds the last complete object and closes any open braces/arrays so you get partial-but-valid output rather than a hard error.
-
----
-
-## Project layout
-
-```
-.
-├── README.md
-├── server.py              # Python HTTP server: static + state + LLM proxy
-├── index.html             # Web app shell
-├── styles.css             # Paper-notebook theme
-├── app.js                 # All client logic — state, render, prompts
-├── i18n.js                # UI translations (en/ja/zh-Hant/zh-Hans/ko/es) + t()
-├── sync.js                # Supabase accounts + cross-device state sync
-├── deploy.sh              # Stage web files into dist/ and deploy to Cloudflare Pages
-├── functions/
-│   └── api/chat.js        # Cloudflare Pages Function: hosted LLM proxy
-├── data/
-│   ├── linguini.sqlite3   # Single-row state store
-│   └── app-state.json     # Human-readable mirror
-└── android/
-    ├── build-apk.sh
-    └── app/
-        ├── build.gradle
-        └── src/main/...   # WebView wrapper + Java local server
-```
-
----
-
-## What's it for, again?
-
-You pick a language. Linguini drafts a multi-week plan. You open a lesson, the AI fleshes it out into a real teaching page with examples and a vocab table. You take a quiz, get marked. You ask the embedded tutor a question. You jump into a role-play with a character to use what you learned. Every word you see ends up in your vocab bank. Everything saves locally — and syncs across your devices if you sign in.
