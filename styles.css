@@ -1372,7 +1372,7 @@ select {
 
 .loading-badge {
   position: fixed;
-  top: 16px;
+  top: 66px; /* below the fixed home/globe/account cluster */
   right: 16px;
   z-index: 1000;
   display: flex;
@@ -1557,6 +1557,12 @@ select {
   align-items: flex-start;
 }
 
+/* Keep header buttons (Delete plan, New chat, ...) clear of the fixed cluster. */
+@media (min-width: 981px) {
+  .workspace-header { padding-right: 182px; }
+}
+
+
 .top-icon-btn {
   width: 42px;
   height: 42px;
@@ -1688,6 +1694,9 @@ select {
   box-shadow: 3px 3px 0 var(--ink);
 }
 
+/* Landing page / sample preview: no lesson bar. */
+.plan-layout.no-lessons > .lesson-sidebar { display: none; }
+
 .sample-kicker {
   font-size: 11.5px;
   font-weight: 700;
@@ -1788,3 +1797,12 @@ select {
 }
 
 .auth-skip:hover { color: var(--ink); }
+
+/* On small screens the home/globe/account cluster sits in the (padded) brand
+   row and scrolls with the page instead of floating over content. Must stay
+   after the .top-icon-btn base rule. */
+@media (max-width: 980px) {
+  .top-actions { position: absolute; }
+  .top-icon-btn { width: 38px; height: 38px; }
+  .brand { padding-right: 148px; }
+}

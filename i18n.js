@@ -18,6 +18,7 @@ const UI_LANGUAGE_NAMES = {
 
 const I18N = {
   en: {
+    "nav.home": "Home",
     "auth.welcome": "Welcome to Linguini",
     "auth.blurb": "Sign in or create a free account to sync your plans, vocab, chats, and API keys across devices — or skip and keep everything on this device.",
     "auth.skip": "Continue without an account",
@@ -331,6 +332,7 @@ const I18N = {
   },
 
   ja: {
+    "nav.home": "ホーム",
     "auth.welcome": "Linguiniへようこそ",
     "auth.blurb": "サインインまたは無料アカウントを作成すると、プラン・単語・チャット・APIキーがデバイス間で同期されます。スキップしてこのデバイスだけで使うこともできます。",
     "auth.skip": "アカウントなしで続ける",
@@ -644,6 +646,7 @@ const I18N = {
   },
 
   "zh-Hant": {
+    "nav.home": "首頁",
     "auth.welcome": "歡迎使用 Linguini",
     "auth.blurb": "登入或建立免費帳號，即可在裝置間同步你的計畫、單字、對話與 API 金鑰；也可以略過，資料只保留在此裝置。",
     "auth.skip": "不使用帳號繼續",
@@ -957,6 +960,7 @@ const I18N = {
   },
 
   "zh-Hans": {
+    "nav.home": "主页",
     "auth.welcome": "欢迎使用 Linguini",
     "auth.blurb": "登录或创建免费账号，即可在设备间同步你的计划、单词、对话与 API 密钥；也可以跳过，数据只保留在此设备。",
     "auth.skip": "不使用账号继续",
@@ -1270,6 +1274,7 @@ const I18N = {
   },
 
   ko: {
+    "nav.home": "홈",
     "auth.welcome": "Linguini에 오신 것을 환영합니다",
     "auth.blurb": "로그인하거나 무료 계정을 만들면 플랜·단어·채팅·API 키가 기기 간에 동기화됩니다. 건너뛰고 이 기기에서만 사용할 수도 있습니다.",
     "auth.skip": "계정 없이 계속하기",
@@ -1583,6 +1588,7 @@ const I18N = {
   },
 
   es: {
+    "nav.home": "Inicio",
     "auth.welcome": "Te damos la bienvenida a Linguini",
     "auth.blurb": "Inicia sesión o crea una cuenta gratuita para sincronizar tus planes, vocabulario, chats y claves de API entre dispositivos, o continúa sin cuenta y todo se queda en este dispositivo.",
     "auth.skip": "Continuar sin cuenta",

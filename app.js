@@ -202,6 +202,15 @@ let activeLessonId = state.currentLessonId || "";
 let activeCharacterId = state.currentCharacterId || state.characters[0]?.id || "";
 let activeLessonMode = state.currentLessonMode === "edit" ? "edit" : "study";
 let vocabSearch = "";
+// Session-only navigation state: the Home button shows the landing page, and
+// sample lessons render as previews without ever entering saved state.
+let showLanding = false;
+let sampleLessonPreview = null;
+
+function leaveLanding() {
+  showLanding = false;
+  sampleLessonPreview = null;
+}
 const loadingLabels = [];
 
 const els = {
@@ -209,6 +218,8 @@ const els = {
   languageSelect: document.querySelector("#languageSelect"),
   levelSelect: document.querySelector("#levelSelect"),
   pedagogyStyleSelect: document.querySelector("#pedagogyStyleSelect"),
+  planLayout: document.querySelector("#plansView .plan-layout"),
+  homeBtn: document.querySelector("#homeBtn"),
   uiLangOptions: Array.from(document.querySelectorAll(".ui-lang-option")),
   accountTopBtn: document.querySelector("#accountTopBtn"),
   authGate: document.querySelector("#authGate"),
@@ -977,6 +988,7 @@ function renderPlans() {
       button.querySelector("strong").textContent = plan.title;
       button.querySelector("span").textContent = t("plans.cardMeta", { level: levelLabel(plan.level), count: plan.lessons.length });
       button.addEventListener("click", () => {
+        leaveLanding();
         state.currentPlanId = plan.id;
         activeLessonId = plan.lessons[0]?.id || "";
         saveState();
@@ -997,10 +1009,16 @@ function groupBy(items, getKey) {
 }
 
 function renderPlanEditor() {
-  const plan = currentPlan();
-  const lesson = currentLesson();
+  let plan = showLanding ? null : currentPlan();
+  let lesson = showLanding ? null : currentLesson();
+  if (sampleLessonPreview) {
+    plan = sampleLessonPreview;
+    lesson = plan.lessons[0];
+  }
   els.planKicker.textContent = plan ? `${languageLabel(plan.language)} - ${levelLabel(plan.level)}` : t("plans.kicker");
   els.planTitle.textContent = plan?.title || t("plans.selectOrCreate");
+  // Landing page and sample previews hide the (empty or single-entry) lesson bar.
+  els.planLayout?.classList.toggle("no-lessons", !plan || !!sampleLessonPreview);
   renderLessons(plan, lesson);
   renderLessonMode(plan, lesson);
 }
@@ -1064,22 +1082,19 @@ function buildOnboarding() {
 }
 
 function openSampleLesson(sample) {
-  let plan = state.plans.find((entry) => entry.id === sample.id);
-  if (!plan) {
-    plan = normalizePlan({
-      id: sample.id,
-      title: t("onboarding.samplePlan", { language: languageLabel(sample.language) }),
-      language: sample.language,
-      level: sample.level,
-      lessons: [sample.lesson]
-    });
-    state.plans.push(plan);
-  }
-  state.currentPlanId = plan.id;
-  activeLessonId = plan.lessons[0]?.id || "";
+  // View-only: build a throwaway plan object that is never pushed into state,
+  // never saved, and never synced. Normalized once so exercise feedback
+  // survives re-renders within the session.
+  sampleLessonPreview = normalizePlan({
+    id: sample.id,
+    title: t("onboarding.samplePlan", { language: languageLabel(sample.language) }),
+    language: sample.language,
+    level: sample.level,
+    lessons: [sample.lesson]
+  });
   activeLessonMode = "study";
-  saveState();
-  render();
+  switchView("plansView");
+  renderPlanEditor();
 }
 
 function renderLessonStudy(plan, lesson) {
@@ -1917,6 +1932,7 @@ function renderVocabBank() {
         link.className = "link-btn";
         link.textContent = `${plan.title} → ${lesson.title}`;
         link.addEventListener("click", () => {
+          leaveLanding();
           state.currentPlanId = plan.id;
           activeLessonId = lesson.id;
           activeLessonMode = "study";
@@ -2054,6 +2070,7 @@ async function generatePlan() {
         lessons
       });
       state.plans.unshift(plan);
+      leaveLanding();
       state.currentPlanId = plan.id;
       activeLessonId = plan.lessons[0]?.id || "";
       activeLessonMode = "study";
@@ -2696,6 +2713,7 @@ function newPlan() {
     lessons: [lesson]
   });
   state.plans.unshift(plan);
+  leaveLanding();
   state.currentPlanId = plan.id;
   activeLessonId = lesson.id;
   activeLessonMode = "study";
@@ -2719,6 +2737,7 @@ function deleteCurrentPlan() {
   const plan = currentPlan();
   if (!plan || !confirm(t("confirm.delete", { title: plan.title }))) return;
   state.plans = state.plans.filter((item) => item.id !== plan.id);
+  leaveLanding();
   state.currentPlanId = state.plans[0]?.id || "";
   activeLessonId = state.plans[0]?.lessons[0]?.id || "";
   saveState();
@@ -2956,6 +2975,12 @@ function bindEvents() {
       render();
     });
   }
+  els.homeBtn?.addEventListener("click", () => {
+    sampleLessonPreview = null;
+    showLanding = true;
+    switchView("plansView");
+    render();
+  });
   els.accountTopBtn?.addEventListener("click", () => {
     if (LinguiniSync.isSignedIn()) switchView("settingsView");
     else openAuthGate();
