@@ -6,6 +6,10 @@ A local-first, AI-powered language-learning platform — structured lesson gener
 
 ---
 
+## Why
+
+Most language apps flatten everything to one level: grammar gets oversimplified, pronunciation becomes "sounds like...", and IPA, morphology, and glossing are off the table. Linguini was built to be the opposite — a maximally customizable AI learning tool that meets you where you are. A **teaching-style switch** runs every generation in either *linguistic* mode (IPA, morphological breakdowns, precise terminology for those with the background) or *plain* mode (no jargon, simple analogies for those without). Combined with free-form plan prompts, per-lesson refinement notes, editable everything, and swappable models per task, it produces real lesson plans that don't dumb down the content unless you ask them to.
+
 ## What it does
 
 - **Plan generation** — one prompt (*"Advanced Korean for TOPIK II"*) becomes a 20–30 lesson curriculum with per-lesson grammar concepts and starter vocab.
