@@ -77,6 +77,125 @@ const defaultScenarios = [
   { id: "custom", title: "Custom scenario", details: "" }
 ];
 
+// The UI language is dropped from the target-language dropdown (you already
+// speak it); everything else, including English, stays selectable.
+const UI_TARGET_EXCLUDE = {
+  en: "English",
+  ja: "Japanese",
+  "zh-Hant": "Chinese (Mandarin)",
+  "zh-Hans": "Chinese (Mandarin)",
+  ko: "Korean",
+  es: "Spanish"
+};
+
+// Pre-expanded demo lessons for the landing page. Each becomes its own
+// one-lesson plan on first click (fixed ids keep them deduplicated).
+const SAMPLE_PLANS = [
+  {
+    id: "plan-sample-es",
+    language: "Spanish",
+    level: "Beginner",
+    lesson: {
+      id: "lesson-sample-es",
+      title: "Ser vs. estar: two ways to be",
+      grammar: "ser vs. estar",
+      description: "Spanish has two verbs for \"to be\". Ser tells us what something is — identity, origin, profession. Estar tells us how something is — feelings, states, and location.",
+      expanded: true,
+      sections: [
+        { heading: "Ser: what something is", body: "Use ser for identity, origin, profession, and inherent traits. Soy estudiante. (I am a student.) Marta es de Colombia. (Marta is from Colombia.) La casa es vieja. (The house is old — that's its character.)" },
+        { heading: "Estar: how something is", body: "Use estar for feelings, temporary states, and location — think \"estado\" (state). Estoy cansado. (I am tired.) El café está frío. (The coffee is cold.) Estamos en la cocina. (We are in the kitchen.)" },
+        { heading: "Same adjective, different verb", body: "Some adjectives change meaning with the verb. Ana es lista. (Ana is clever.) vs. Ana está lista. (Ana is ready.) La manzana es verde. (The apple is green.) vs. La manzana está verde. (The apple is unripe.)" }
+      ],
+      vocab: [
+        { term: "ser", ipa: "seɾ", pos: "verb", translation: "to be (identity)", example: "Soy profesor. — I am a teacher." },
+        { term: "estar", ipa: "esˈtaɾ", pos: "verb", translation: "to be (state, place)", example: "Estoy en casa. — I am at home." },
+        { term: "cansado", ipa: "kanˈsaðo", pos: "adjective", translation: "tired", example: "Estás cansado hoy. — You are tired today." },
+        { term: "listo", ipa: "ˈlisto", pos: "adjective", translation: "clever / ready", example: "¿Estás listo? — Are you ready?" },
+        { term: "frío", ipa: "ˈfɾio", pos: "adjective", translation: "cold", example: "La sopa está fría. — The soup is cold." },
+        { term: "aburrido", ipa: "aβuˈriðo", pos: "adjective", translation: "boring / bored", example: "La película es aburrida. — The movie is boring." }
+      ],
+      exercises: [
+        { kind: "open", prompt: "Fill in ser or estar: \"Yo ___ de México, pero ahora ___ en Madrid.\"", answer: "soy / estoy", hint: "Origin first, location second." },
+        { kind: "open", prompt: "Translate: \"The coffee is cold.\"", answer: "El café está frío.", hint: "A state that can change." },
+        { kind: "open", prompt: "Explain the difference: \"Pedro es aburrido\" vs. \"Pedro está aburrido\".", answer: "With ser, Pedro is a boring person; with estar, Pedro is bored right now." }
+      ],
+      scenario: { title: "Meeting your friend's family", details: "You've arrived at a Spanish friend's family dinner. Introduce yourself — who you are, where you're from, how you're feeling — and ask about the family, choosing ser or estar correctly as you go." }
+    }
+  },
+  {
+    id: "plan-sample-ja",
+    language: "Japanese",
+    level: "Absolute beginner",
+    lesson: {
+      id: "lesson-sample-ja",
+      title: "Hiragana: your first ten characters",
+      grammar: "hiragana あ–こ",
+      description: "Japanese writes native words with hiragana, a syllabary where each character is one sound. This lesson covers the first two rows — the five vowels and the k-row — enough to read real words.",
+      expanded: true,
+      alphabet: [
+        { character: "あ", romanization: "a", ipa: "a", group: "Vowels", note: "Like the a in \"father\"." },
+        { character: "い", romanization: "i", ipa: "i", group: "Vowels", note: "Like the ee in \"see\", but short." },
+        { character: "う", romanization: "u", ipa: "ɯ", group: "Vowels", note: "Lips relaxed, not rounded like English oo." },
+        { character: "え", romanization: "e", ipa: "e", group: "Vowels", note: "Like the e in \"pet\"." },
+        { character: "お", romanization: "o", ipa: "o", group: "Vowels", note: "A pure o — no glide at the end." },
+        { character: "か", romanization: "ka", ipa: "ka", group: "K-row", note: "" },
+        { character: "き", romanization: "ki", ipa: "ki", group: "K-row", note: "" },
+        { character: "く", romanization: "ku", ipa: "kɯ", group: "K-row", note: "" },
+        { character: "け", romanization: "ke", ipa: "ke", group: "K-row", note: "" },
+        { character: "こ", romanization: "ko", ipa: "ko", group: "K-row", note: "" }
+      ],
+      sections: [
+        { heading: "One character, one beat", body: "Every hiragana is a syllable spoken with even length. あい (ai) \"love\" is two beats: a-i. Consonant rows add a consonant to the same five vowels: か (ka), き (ki), く (ku), け (ke), こ (ko)." },
+        { heading: "Reading your first words", body: "With ten characters you can already read real Japanese: いえ (ie) \"house\", あお (ao) \"blue\", かき (kaki) \"persimmon\", こえ (koe) \"voice\", えき (eki) \"station\". Read each aloud, one even beat per character." }
+      ],
+      vocab: [
+        { term: "あい", ipa: "ai", pos: "noun", translation: "love", example: "あい (ai) — love" },
+        { term: "いえ", ipa: "ie", pos: "noun", translation: "house", example: "いえ (ie) — house" },
+        { term: "えき", ipa: "eki", pos: "noun", translation: "station", example: "えき (eki) — station" },
+        { term: "かお", ipa: "kao", pos: "noun", translation: "face", example: "かお (kao) — face" },
+        { term: "こえ", ipa: "koe", pos: "noun", translation: "voice", example: "こえ (koe) — voice" }
+      ],
+      exercises: [
+        { kind: "open", prompt: "Write in romaji: あき", answer: "aki (autumn)" },
+        { kind: "open", prompt: "Write in hiragana: k-o-e (voice)", answer: "こえ" },
+        { kind: "open", prompt: "Which character is \"ku\"?", answer: "く" }
+      ],
+      scenario: { title: "Hiragana reading game", details: "Your tutor shows you short words written only with あ–こ characters. Read each one aloud in romaji, then guess the meaning. The tutor gives friendly hints when you're stuck." }
+    }
+  },
+  {
+    id: "plan-sample-ko",
+    language: "Korean",
+    level: "Beginner",
+    lesson: {
+      id: "lesson-sample-ko",
+      title: "Ordering at a café: 주세요",
+      grammar: "polite requests with 주세요",
+      description: "One pattern unlocks every café, restaurant, and shop in Korea: [thing] 주세요 (juseyo) — \"please give me ...\". Add a number and a counter and you can order like a local.",
+      expanded: true,
+      sections: [
+        { heading: "The magic word: 주세요", body: "Put what you want before 주세요 (juseyo): 커피 주세요 (keopi juseyo) \"Coffee, please.\" 물 주세요 (mul juseyo) \"Water, please.\" It's polite enough for any café." },
+        { heading: "Counting drinks: 잔", body: "Drinks are counted with 잔 (jan) \"cup\": 한 잔 (han jan) one cup, 두 잔 (du jan) two cups. Order: thing + number + counter + 주세요 — 아메리카노 두 잔 주세요 (amerikano du jan juseyo) \"Two americanos, please.\"" },
+        { heading: "Paying and thanking", body: "얼마예요? (eolmayeyo?) \"How much is it?\" When you get your order: 감사합니다 (gamsahamnida) \"Thank you.\" You might hear 드시고 가세요? (deusigo gaseyo?) — \"For here?\"" }
+      ],
+      vocab: [
+        { term: "커피", ipa: "kʰʌpʰi", pos: "noun", translation: "coffee", example: "커피 주세요. (keopi juseyo) — Coffee, please." },
+        { term: "물", ipa: "mul", pos: "noun", translation: "water", example: "물 주세요. (mul juseyo) — Water, please." },
+        { term: "주세요", ipa: "tɕusejo", pos: "verb (polite)", translation: "please give me", example: "이거 주세요. (igeo juseyo) — This one, please." },
+        { term: "잔", ipa: "tɕan", pos: "counter", translation: "cup, glass", example: "두 잔 (du jan) — two cups" },
+        { term: "얼마예요", ipa: "ʌlmajejo", pos: "phrase", translation: "how much is it?", example: "이거 얼마예요? (igeo eolmayeyo) — How much is this?" },
+        { term: "감사합니다", ipa: "kamsahamnida", pos: "phrase", translation: "thank you", example: "감사합니다! (gamsahamnida) — Thank you!" }
+      ],
+      exercises: [
+        { kind: "open", prompt: "Order one coffee, politely.", answer: "커피 (한 잔) 주세요. (keopi han jan juseyo)" },
+        { kind: "open", prompt: "Ask how much it costs.", answer: "얼마예요? (eolmayeyo?)" },
+        { kind: "open", prompt: "Order two americanos.", answer: "아메리카노 두 잔 주세요. (amerikano du jan juseyo)" }
+      ],
+      scenario: { title: "A Seoul café counter", details: "You're at the counter of a busy café in Seoul. Greet the barista, order a drink (maybe two!), ask the price, and thank them — all with 주세요 and your new counting words." }
+    }
+  }
+];
+
 const state = loadState();
 let activeView = "plansView";
 let activeLessonId = state.currentLessonId || "";
@@ -90,7 +209,17 @@ const els = {
   languageSelect: document.querySelector("#languageSelect"),
   levelSelect: document.querySelector("#levelSelect"),
   pedagogyStyleSelect: document.querySelector("#pedagogyStyleSelect"),
-  uiLanguageSelect: document.querySelector("#uiLanguageSelect"),
+  uiLangOptions: Array.from(document.querySelectorAll(".ui-lang-option")),
+  accountTopBtn: document.querySelector("#accountTopBtn"),
+  authGate: document.querySelector("#authGate"),
+  authForm: document.querySelector("#authForm"),
+  authEmailInput: document.querySelector("#authEmailInput"),
+  authPasswordInput: document.querySelector("#authPasswordInput"),
+  authSubmitBtn: document.querySelector("#authSubmitBtn"),
+  authModeSignIn: document.querySelector("#authModeSignIn"),
+  authModeSignUp: document.querySelector("#authModeSignUp"),
+  authStatus: document.querySelector("#authStatus"),
+  authSkipBtn: document.querySelector("#authSkipBtn"),
   accountEmailInput: document.querySelector("#accountEmailInput"),
   accountPasswordInput: document.querySelector("#accountPasswordInput"),
   accountSignInBtn: document.querySelector("#accountSignInBtn"),
@@ -430,9 +559,6 @@ function saveState() {
   state.language = els.languageSelect.value;
   state.level = els.levelSelect.value;
   state.pedagogyStyle = els.pedagogyStyleSelect?.value === "layman" ? "layman" : "linguistic";
-  if (els.uiLanguageSelect) {
-    state.uiLanguage = I18N_LOCALES.includes(els.uiLanguageSelect.value) ? els.uiLanguageSelect.value : "en";
-  }
   state.currentLessonId = activeLessonId;
   state.currentLessonMode = activeLessonMode;
   state.currentCharacterId = activeCharacterId;
@@ -627,6 +753,34 @@ function uiLanguageName() {
   return UI_LANGUAGE_NAMES[state.uiLanguage] || "English";
 }
 
+// Display name for a target language in the current UI language. Values stored
+// in state (and sent to prompts) stay the English names; only labels localize.
+function languageLabel(name) {
+  const key = `lang.${name}`;
+  const label = t(key);
+  return label === key ? name : label;
+}
+
+// Default characters/scenarios are stored data, so translate them only at
+// display time and only while the stored field still matches the shipped
+// English text — a user edit always wins over the dictionary.
+function defaultText(kind, item, field) {
+  const defaults = kind === "character" ? defaultCharacters : defaultScenarios;
+  const original = defaults.find((entry) => entry.id === item.id);
+  if (!original || original[field] !== item[field]) return item[field];
+  const key = `${kind}.${item.id}.${field}`;
+  const label = t(key);
+  return label === key ? item[field] : label;
+}
+
+function characterLabel(character, field = "name") {
+  return defaultText("character", character, field);
+}
+
+function scenarioLabel(scenario, field = "title") {
+  return defaultText("scenario", scenario, field);
+}
+
 // Instructional/meta content (explanations, instructions, translations,
 // feedback) is generated in the learner's interface language. The taught
 // target language and the JSON wire format stay untouched.
@@ -727,18 +881,23 @@ async function pullRemoteState() {
 }
 
 function renderLanguages() {
-  if (!els.languageSelect.options.length) {
-    for (const language of LANGUAGES) {
-      const option = document.createElement("option");
-      option.value = language;
-      option.textContent = language;
-      els.languageSelect.append(option);
-    }
+  // Rebuilt every render: labels follow the UI language, and the UI language
+  // itself is dropped from the list (unless it's the current selection).
+  const excluded = UI_TARGET_EXCLUDE[state.uiLanguage] || "";
+  els.languageSelect.replaceChildren();
+  for (const language of LANGUAGES) {
+    if (language === excluded && language !== state.language) continue;
+    const option = document.createElement("option");
+    option.value = language;
+    option.textContent = languageLabel(language);
+    els.languageSelect.append(option);
   }
   els.languageSelect.value = state.language;
   els.levelSelect.value = state.level;
   if (els.pedagogyStyleSelect) els.pedagogyStyleSelect.value = state.pedagogyStyle || "linguistic";
-  if (els.uiLanguageSelect) els.uiLanguageSelect.value = state.uiLanguage || "en";
+  for (const button of els.uiLangOptions) {
+    button.classList.toggle("active", button.dataset.value === (state.uiLanguage || "en"));
+  }
 }
 
 function populateRoutePresets() {
@@ -807,7 +966,7 @@ function renderPlans() {
   for (const [language, plans] of Object.entries(groups)) {
     const heading = document.createElement("div");
     heading.className = "muted";
-    heading.textContent = language;
+    heading.textContent = languageLabel(language);
     els.planList.append(heading);
     for (const plan of plans) {
       const button = document.createElement("button");
@@ -840,7 +999,7 @@ function groupBy(items, getKey) {
 function renderPlanEditor() {
   const plan = currentPlan();
   const lesson = currentLesson();
-  els.planKicker.textContent = plan ? `${plan.language} - ${levelLabel(plan.level)}` : t("plans.kicker");
+  els.planKicker.textContent = plan ? `${languageLabel(plan.language)} - ${levelLabel(plan.level)}` : t("plans.kicker");
   els.planTitle.textContent = plan?.title || t("plans.selectOrCreate");
   renderLessons(plan, lesson);
   renderLessonMode(plan, lesson);
@@ -855,12 +1014,84 @@ function renderLessonMode(plan, lesson) {
   else renderLessonEdit(plan, lesson);
 }
 
+function buildOnboarding() {
+  const wrap = document.createElement("div");
+  wrap.className = "onboarding";
+
+  const steps = document.createElement("section");
+  steps.className = "onboarding-card";
+  const stepsTitle = document.createElement("h3");
+  stepsTitle.textContent = t("onboarding.title");
+  const list = document.createElement("ol");
+  list.className = "onboarding-steps";
+  for (const step of ["step1", "step2", "step3", "step4"]) {
+    const item = document.createElement("li");
+    item.textContent = t(`onboarding.${step}`);
+    list.append(item);
+  }
+  steps.append(stepsTitle, list);
+
+  const samples = document.createElement("section");
+  samples.className = "onboarding-samples";
+  const samplesTitle = document.createElement("h3");
+  samplesTitle.textContent = t("onboarding.samplesTitle");
+  const hint = document.createElement("p");
+  hint.className = "muted";
+  hint.textContent = t("onboarding.samplesHint");
+  const grid = document.createElement("div");
+  grid.className = "sample-grid";
+  for (const sample of SAMPLE_PLANS) {
+    const card = document.createElement("button");
+    card.type = "button";
+    card.className = "sample-card";
+    const kicker = document.createElement("span");
+    kicker.className = "sample-kicker";
+    kicker.textContent = languageLabel(sample.language);
+    const title = document.createElement("span");
+    title.className = "sample-title";
+    title.textContent = sample.lesson.title;
+    const desc = document.createElement("span");
+    desc.className = "sample-desc";
+    desc.textContent = sample.lesson.description;
+    card.append(kicker, title, desc);
+    card.addEventListener("click", () => openSampleLesson(sample));
+    grid.append(card);
+  }
+  samples.append(samplesTitle, hint, grid);
+
+  wrap.append(steps, samples);
+  return wrap;
+}
+
+function openSampleLesson(sample) {
+  let plan = state.plans.find((entry) => entry.id === sample.id);
+  if (!plan) {
+    plan = normalizePlan({
+      id: sample.id,
+      title: t("onboarding.samplePlan", { language: languageLabel(sample.language) }),
+      language: sample.language,
+      level: sample.level,
+      lessons: [sample.lesson]
+    });
+    state.plans.push(plan);
+  }
+  state.currentPlanId = plan.id;
+  activeLessonId = plan.lessons[0]?.id || "";
+  activeLessonMode = "study";
+  saveState();
+  render();
+}
+
 function renderLessonStudy(plan, lesson) {
   els.lessonStudyContainer.replaceChildren();
-  if (!plan || !lesson) {
+  if (!plan) {
+    els.lessonStudyContainer.append(buildOnboarding());
+    return;
+  }
+  if (!lesson) {
     const empty = document.createElement("div");
     empty.className = "empty-state";
-    empty.textContent = plan ? t("study.emptyNoLesson") : t("study.emptyNoPlan");
+    empty.textContent = t("study.emptyNoLesson");
     els.lessonStudyContainer.append(empty);
     return;
   }
@@ -1455,8 +1686,8 @@ function renderLessons(plan, activeLesson) {
 
 function renderRoleplaySetup() {
   const chat = currentChat();
-  fillSelect(els.characterSelect, state.characters, "name", "id", chat?.characterId);
-  fillSelect(els.scenarioSelect, state.scenarios, "title", "id", chat?.scenarioId);
+  fillSelect(els.characterSelect, state.characters.map((c) => ({ ...c, name: characterLabel(c) })), "name", "id", chat?.characterId);
+  fillSelect(els.scenarioSelect, state.scenarios.map((s) => ({ ...s, title: scenarioLabel(s) })), "title", "id", chat?.scenarioId);
   els.difficultySelect.value = chat?.difficulty || "B1 independent";
   els.testFocusInput.value = chat?.testFocus || "";
   els.scenarioText.value = chat?.scenarioText || "";
@@ -1467,10 +1698,11 @@ function renderRoleplaySetup() {
   }
   const character = chatCharacter(chat);
   const scenario = chatScenario(chat);
-  els.chatKicker.textContent = `${chat.language} - ${difficultyLabel(chat.difficulty)}`;
+  els.chatKicker.textContent = `${languageLabel(chat.language)} - ${difficultyLabel(chat.difficulty)}`;
+  const characterName = character ? characterLabel(character) : t("chat.characterFallback");
   els.chatTitle.textContent = chat.title && chat.title !== "New chat"
-    ? `${character?.name || t("chat.characterFallback")} - ${chat.title}`
-    : `${character?.name || t("chat.characterFallback")} - ${scenario?.title || t("chat.scenarioFallback")}`;
+    ? `${characterName} - ${chat.title}`
+    : `${characterName} - ${scenario ? scenarioLabel(scenario) : t("chat.scenarioFallback")}`;
 }
 
 function renderChatTabs() {
@@ -1500,7 +1732,7 @@ function renderChatTabs() {
     label.textContent = chat.title || t("chat.untitled");
     const meta = document.createElement("em");
     meta.className = "chat-tab-meta";
-    meta.textContent = chat.language;
+    meta.textContent = languageLabel(chat.language);
     const del = document.createElement("span");
     del.className = "chat-tab-del";
     del.textContent = "×";
@@ -1587,8 +1819,8 @@ function renderCharacters() {
     button.className = "list-card";
     button.classList.toggle("active", character.id === activeCharacterId);
     button.innerHTML = `<strong></strong><span></span>`;
-    button.querySelector("strong").textContent = character.name;
-    button.querySelector("span").textContent = character.role;
+    button.querySelector("strong").textContent = characterLabel(character);
+    button.querySelector("span").textContent = characterLabel(character, "role");
     button.addEventListener("click", () => {
       activeCharacterId = character.id;
       saveState();
@@ -1659,7 +1891,7 @@ function renderVocabBank() {
     const block = document.createElement("section");
     block.className = "vocab-block";
     const heading = document.createElement("h3");
-    heading.textContent = language;
+    heading.textContent = languageLabel(language);
     block.append(heading);
 
     const table = document.createElement("table");
@@ -1737,14 +1969,16 @@ function toggleVocabAddForm(show) {
 }
 
 function populateVocabAddLanguage() {
-  if (!els.vocabAddLanguage || els.vocabAddLanguage.options.length) return;
+  if (!els.vocabAddLanguage) return;
+  const previous = els.vocabAddLanguage.value;
+  els.vocabAddLanguage.replaceChildren();
   for (const language of LANGUAGES) {
     const option = document.createElement("option");
     option.value = language;
-    option.textContent = language;
+    option.textContent = languageLabel(language);
     els.vocabAddLanguage.append(option);
   }
-  els.vocabAddLanguage.value = state.language;
+  els.vocabAddLanguage.value = previous || state.language;
 }
 
 function submitVocabAdd(event) {
@@ -2602,6 +2836,18 @@ async function testConnection() {
   });
 }
 
+async function performAuth(mode, email, password) {
+  if (mode === "signup") {
+    const gotSession = await LinguiniSync.signUp(email, password);
+    if (!gotSession) await LinguiniSync.signIn(email, password);
+  } else {
+    await LinguiniSync.signIn(email, password);
+  }
+  // First-login merge: an existing remote row wins; otherwise push local up.
+  const row = await pullRemoteState();
+  if (!row) LinguiniSync.push(state);
+}
+
 async function accountAuth(mode) {
   if (!LinguiniSync.isConfigured()) {
     renderAccountPanel();
@@ -2615,20 +2861,48 @@ async function accountAuth(mode) {
   }
   els.accountStatus.textContent = t("account.working");
   try {
-    if (mode === "signup") {
-      const gotSession = await LinguiniSync.signUp(email, password);
-      if (!gotSession) await LinguiniSync.signIn(email, password);
-    } else {
-      await LinguiniSync.signIn(email, password);
-    }
+    await performAuth(mode, email, password);
     els.accountPasswordInput.value = "";
-    // First-login merge: an existing remote row wins; otherwise push local up.
-    const row = await pullRemoteState();
-    if (!row) LinguiniSync.push(state);
     render();
   } catch (error) {
     els.accountStatus.textContent = error.message;
   }
+}
+
+const AUTH_GATE_SEEN_KEY = "linguini-auth-gate-seen-v1";
+let authMode = "signin";
+
+function setAuthMode(mode) {
+  authMode = mode;
+  renderAuthGate();
+}
+
+function renderAuthGate() {
+  if (!els.authGate) return;
+  els.authModeSignIn.classList.toggle("active", authMode === "signin");
+  els.authModeSignUp.classList.toggle("active", authMode === "signup");
+  const submitKey = authMode === "signup" ? "account.signUp" : "account.signIn";
+  els.authSubmitBtn.dataset.i18n = submitKey;
+  els.authSubmitBtn.textContent = t(submitKey);
+  els.authPasswordInput.autocomplete = authMode === "signup" ? "new-password" : "current-password";
+}
+
+function openAuthGate() {
+  if (!els.authGate) return;
+  els.authStatus.textContent = LinguiniSync.isConfigured() ? "" : t("account.notConfigured");
+  renderAuthGate();
+  els.authGate.hidden = false;
+  els.authEmailInput?.focus();
+}
+
+function closeAuthGate() {
+  if (!els.authGate) return;
+  els.authGate.hidden = true;
+  localStorage.setItem(AUTH_GATE_SEEN_KEY, "1");
+}
+
+function shouldShowAuthGate() {
+  return LinguiniSync.isConfigured() && !LinguiniSync.isSignedIn() && !localStorage.getItem(AUTH_GATE_SEEN_KEY);
 }
 
 function switchView(viewId) {
@@ -2673,10 +2947,42 @@ function bindEvents() {
   els.languageSelect.addEventListener("change", saveState);
   els.levelSelect.addEventListener("change", saveState);
   els.pedagogyStyleSelect?.addEventListener("change", saveState);
-  els.uiLanguageSelect?.addEventListener("change", () => {
-    saveState();
-    refreshLocale();
-    render();
+  for (const button of els.uiLangOptions) {
+    button.addEventListener("click", () => {
+      state.uiLanguage = I18N_LOCALES.includes(button.dataset.value) ? button.dataset.value : "en";
+      button.blur(); // collapse the menu on touch/keyboard (focus-within)
+      saveState();
+      refreshLocale();
+      render();
+    });
+  }
+  els.accountTopBtn?.addEventListener("click", () => {
+    if (LinguiniSync.isSignedIn()) switchView("settingsView");
+    else openAuthGate();
+  });
+  els.authModeSignIn?.addEventListener("click", () => setAuthMode("signin"));
+  els.authModeSignUp?.addEventListener("click", () => setAuthMode("signup"));
+  els.authSkipBtn?.addEventListener("click", closeAuthGate);
+  els.authForm?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    if (!LinguiniSync.isConfigured()) {
+      els.authStatus.textContent = t("account.notConfigured");
+      return;
+    }
+    const email = els.authEmailInput.value.trim();
+    const password = els.authPasswordInput.value;
+    if (!email || !password) return;
+    els.authStatus.textContent = t("account.working");
+    try {
+      await performAuth(authMode, email, password);
+      els.authPasswordInput.value = "";
+      els.authStatus.textContent = "";
+      closeAuthGate();
+      refreshLocale();
+      render();
+    } catch (error) {
+      els.authStatus.textContent = error.message;
+    }
   });
   els.accountSignInBtn?.addEventListener("click", () => accountAuth("signin"));
   els.accountSignUpBtn?.addEventListener("click", () => accountAuth("signup"));
@@ -2722,7 +3028,7 @@ function bindEvents() {
     if (chat) {
       chat.scenarioId = els.scenarioSelect.value;
       const scenario = state.scenarios.find((s) => s.id === chat.scenarioId);
-      if (scenario && scenario.details) chat.scenarioText = scenario.details;
+      if (scenario && scenario.details) chat.scenarioText = scenarioLabel(scenario, "details");
     }
     saveState();
     renderRoleplaySetup();
@@ -2799,4 +3105,5 @@ function bindEvents() {
   // The hydrate/pull overlay may have brought a different UI language.
   refreshLocale();
   render();
+  if (shouldShowAuthGate()) openAuthGate();
 })();

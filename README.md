@@ -49,7 +49,7 @@ Notes for the hosted site:
 
 ## Accounts & sync (free, Supabase)
 
-Sign in on the Models tab to sync everything — plans, lessons, vocab, chats, characters, and your API keys — across devices (web + Android). Signed out, the app behaves exactly as before: everything stays in localStorage on the device.
+On first visit a sign-in / register page offers to set up sync — skip it and Linguini stays fully local. The account button next to the globe (or the Models tab) reopens it later. Signing in syncs everything — plans, lessons, vocab, chats, characters, and your API keys — across devices (web + Android). Signed out, everything stays in localStorage on the device.
 
 One-time setup (free Supabase account):
 
@@ -78,7 +78,7 @@ How sync behaves: last write wins. The app pulls your row on boot, after sign-in
 
 ## UI language
 
-The **App language** selector in the sidebar switches the entire interface between English, 日本語, 繁體中文, 简体中文, 한국어, and Español. It also steers generation: lesson explanations, exercise instructions, translations, tutor answers, and corrections are written in your UI language, while the target language being taught (and the JSON wire format) stays untouched. Target-language names in the Language dropdown stay in English, since they're stored values that feed the prompts.
+The **globe button** at the top right switches the entire interface between English, 日本語, 繁體中文, 简体中文, 한국어, and Español (hover to expand). It also steers generation: lesson explanations, exercise instructions, translations, tutor answers, and corrections are written in your UI language, while the target language being taught (and the JSON wire format) stays untouched. Language names in the target-language dropdown are shown in your UI language too (the stored values that feed the prompts stay English), and the UI language itself is dropped from the list. Default characters and scenarios display translated until you edit them.
 
 ---
 
@@ -109,6 +109,8 @@ Each panel also has **Apply to all routes** — fill out one panel and clone it 
 ---
 
 ## Plans & lessons
+
+Until you create your first plan, the main view shows a getting-started guide plus three sample lessons (Spanish ser/estar, hiragana with an alphabet chart, ordering coffee in Korean) — click one to see a finished lesson with no setup.
 
 1. Pick a target language and skill level in the left sidebar.
 2. Type a one-line plan prompt (e.g. *"Advanced Korean for TOPIK II Level 6"*) and hit **Generate plan**.

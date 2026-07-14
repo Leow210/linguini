@@ -1544,3 +1544,247 @@ select {
   margin: 10px 0 0;
   font-size: 12.5px;
 }
+
+/* --- top actions (app language globe + account) --- */
+
+.top-actions {
+  position: fixed;
+  top: 14px;
+  right: 18px;
+  z-index: 60;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.top-icon-btn {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  color: var(--ink-soft);
+  background: var(--card-2);
+  border: 1.5px solid var(--ink);
+  border-radius: 50%;
+  box-shadow: 2px 2px 0 var(--ink);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, color 0.12s ease;
+}
+
+.top-icon-btn:hover,
+.top-icon-btn:focus-visible {
+  color: var(--tomato);
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+.top-icon-btn svg { width: 22px; height: 22px; display: block; }
+
+.ui-lang { position: relative; }
+
+.ui-lang-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 136px;
+  display: grid;
+  gap: 2px;
+  padding: 6px;
+  background: var(--card-2);
+  border: 1.5px solid var(--ink);
+  border-radius: 12px;
+  box-shadow: 3px 3px 0 var(--ink);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-6px) scale(0.96);
+  transform-origin: top right;
+  transition: opacity 0.16s ease, transform 0.16s ease, visibility 0.16s;
+}
+
+/* invisible bridge so the pointer can cross the gap without collapsing the menu */
+.ui-lang-menu::before {
+  content: "";
+  position: absolute;
+  top: -10px;
+  left: 0;
+  right: 0;
+  height: 10px;
+}
+
+.ui-lang:hover .ui-lang-menu,
+.ui-lang:focus-within .ui-lang-menu {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+}
+
+.ui-lang-option {
+  text-align: left;
+  padding: 7px 10px;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.ui-lang-option:hover { background: var(--paper-edge); }
+
+.ui-lang-option.active {
+  background: var(--ink);
+  color: var(--card-2);
+}
+
+/* --- onboarding (empty plans view) --- */
+
+.onboarding {
+  display: grid;
+  gap: 20px;
+  max-width: 740px;
+}
+
+.onboarding-card {
+  background: var(--card);
+  border: 1.5px solid var(--ink);
+  border-radius: 14px;
+  box-shadow: 3px 3px 0 var(--ink);
+  padding: 20px 22px;
+}
+
+.onboarding-card h3,
+.onboarding-samples h3 {
+  margin: 0 0 6px;
+  font-family: var(--serif);
+  font-size: 19px;
+}
+
+.onboarding-steps {
+  margin: 10px 0 0;
+  padding-left: 22px;
+  display: grid;
+  gap: 9px;
+  line-height: 1.5;
+}
+
+.onboarding-samples .muted { margin: 0 0 12px; }
+
+.sample-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.sample-card {
+  display: grid;
+  gap: 6px;
+  align-content: start;
+  text-align: left;
+  padding: 14px 16px;
+  background: var(--card-2);
+  border: 1.5px solid var(--ink);
+  border-radius: 12px;
+  box-shadow: 2px 2px 0 var(--ink);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.sample-card:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+.sample-kicker {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--tomato);
+}
+
+.sample-title {
+  font-family: var(--serif);
+  font-size: 16.5px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.sample-desc {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+/* --- auth gate (register / login) --- */
+
+.auth-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(29, 24, 18, 0.45);
+  backdrop-filter: blur(2px);
+}
+
+.auth-gate[hidden] { display: none; }
+
+.auth-card {
+  width: min(430px, 100%);
+  display: grid;
+  gap: 14px;
+  justify-items: start;
+  padding: 26px 28px;
+  background: var(--paper);
+  border: 1.5px solid var(--ink);
+  border-radius: 16px;
+  box-shadow: 4px 4px 0 var(--ink);
+}
+
+.auth-mark { justify-self: center; }
+
+.auth-card h2 {
+  justify-self: center;
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 24px;
+}
+
+.auth-card > .muted {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.auth-tabs {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+}
+
+.auth-tab {
+  flex: 1;
+  padding: 8px 10px;
+  border: 1.5px solid var(--ink);
+  border-radius: 10px;
+  background: var(--card-2);
+  font-weight: 600;
+}
+
+.auth-tab.active {
+  background: var(--ink);
+  color: var(--card-2);
+}
+
+#authForm {
+  display: grid;
+  gap: 12px;
+  width: 100%;
+}
+
+#authForm .primary-btn { margin-top: 2px; }
+
+.auth-skip {
+  justify-self: center;
+  color: var(--muted);
+  font-size: 13px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.auth-skip:hover { color: var(--ink); }
