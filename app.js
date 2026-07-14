@@ -88,113 +88,10 @@ const UI_TARGET_EXCLUDE = {
   es: "Spanish"
 };
 
-// Pre-expanded demo lessons for the landing page. Each becomes its own
-// one-lesson plan on first click (fixed ids keep them deduplicated).
-const SAMPLE_PLANS = [
-  {
-    id: "plan-sample-es",
-    language: "Spanish",
-    level: "Beginner",
-    lesson: {
-      id: "lesson-sample-es",
-      title: "Ser vs. estar: two ways to be",
-      grammar: "ser vs. estar",
-      description: "Spanish has two verbs for \"to be\". Ser tells us what something is — identity, origin, profession. Estar tells us how something is — feelings, states, and location.",
-      expanded: true,
-      sections: [
-        { heading: "Ser: what something is", body: "Use ser for identity, origin, profession, and inherent traits. Soy estudiante. (I am a student.) Marta es de Colombia. (Marta is from Colombia.) La casa es vieja. (The house is old — that's its character.)" },
-        { heading: "Estar: how something is", body: "Use estar for feelings, temporary states, and location — think \"estado\" (state). Estoy cansado. (I am tired.) El café está frío. (The coffee is cold.) Estamos en la cocina. (We are in the kitchen.)" },
-        { heading: "Same adjective, different verb", body: "Some adjectives change meaning with the verb. Ana es lista. (Ana is clever.) vs. Ana está lista. (Ana is ready.) La manzana es verde. (The apple is green.) vs. La manzana está verde. (The apple is unripe.)" }
-      ],
-      vocab: [
-        { term: "ser", ipa: "seɾ", pos: "verb", translation: "to be (identity)", example: "Soy profesor. — I am a teacher." },
-        { term: "estar", ipa: "esˈtaɾ", pos: "verb", translation: "to be (state, place)", example: "Estoy en casa. — I am at home." },
-        { term: "cansado", ipa: "kanˈsaðo", pos: "adjective", translation: "tired", example: "Estás cansado hoy. — You are tired today." },
-        { term: "listo", ipa: "ˈlisto", pos: "adjective", translation: "clever / ready", example: "¿Estás listo? — Are you ready?" },
-        { term: "frío", ipa: "ˈfɾio", pos: "adjective", translation: "cold", example: "La sopa está fría. — The soup is cold." },
-        { term: "aburrido", ipa: "aβuˈriðo", pos: "adjective", translation: "boring / bored", example: "La película es aburrida. — The movie is boring." }
-      ],
-      exercises: [
-        { kind: "open", prompt: "Fill in ser or estar: \"Yo ___ de México, pero ahora ___ en Madrid.\"", answer: "soy / estoy", hint: "Origin first, location second." },
-        { kind: "open", prompt: "Translate: \"The coffee is cold.\"", answer: "El café está frío.", hint: "A state that can change." },
-        { kind: "open", prompt: "Explain the difference: \"Pedro es aburrido\" vs. \"Pedro está aburrido\".", answer: "With ser, Pedro is a boring person; with estar, Pedro is bored right now." }
-      ],
-      scenario: { title: "Meeting your friend's family", details: "You've arrived at a Spanish friend's family dinner. Introduce yourself — who you are, where you're from, how you're feeling — and ask about the family, choosing ser or estar correctly as you go." }
-    }
-  },
-  {
-    id: "plan-sample-ja",
-    language: "Japanese",
-    level: "Absolute beginner",
-    lesson: {
-      id: "lesson-sample-ja",
-      title: "Hiragana: your first ten characters",
-      grammar: "hiragana あ–こ",
-      description: "Japanese writes native words with hiragana, a syllabary where each character is one sound. This lesson covers the first two rows — the five vowels and the k-row — enough to read real words.",
-      expanded: true,
-      alphabet: [
-        { character: "あ", romanization: "a", ipa: "a", group: "Vowels", note: "Like the a in \"father\"." },
-        { character: "い", romanization: "i", ipa: "i", group: "Vowels", note: "Like the ee in \"see\", but short." },
-        { character: "う", romanization: "u", ipa: "ɯ", group: "Vowels", note: "Lips relaxed, not rounded like English oo." },
-        { character: "え", romanization: "e", ipa: "e", group: "Vowels", note: "Like the e in \"pet\"." },
-        { character: "お", romanization: "o", ipa: "o", group: "Vowels", note: "A pure o — no glide at the end." },
-        { character: "か", romanization: "ka", ipa: "ka", group: "K-row", note: "" },
-        { character: "き", romanization: "ki", ipa: "ki", group: "K-row", note: "" },
-        { character: "く", romanization: "ku", ipa: "kɯ", group: "K-row", note: "" },
-        { character: "け", romanization: "ke", ipa: "ke", group: "K-row", note: "" },
-        { character: "こ", romanization: "ko", ipa: "ko", group: "K-row", note: "" }
-      ],
-      sections: [
-        { heading: "One character, one beat", body: "Every hiragana is a syllable spoken with even length. あい (ai) \"love\" is two beats: a-i. Consonant rows add a consonant to the same five vowels: か (ka), き (ki), く (ku), け (ke), こ (ko)." },
-        { heading: "Reading your first words", body: "With ten characters you can already read real Japanese: いえ (ie) \"house\", あお (ao) \"blue\", かき (kaki) \"persimmon\", こえ (koe) \"voice\", えき (eki) \"station\". Read each aloud, one even beat per character." }
-      ],
-      vocab: [
-        { term: "あい", ipa: "ai", pos: "noun", translation: "love", example: "あい (ai) — love" },
-        { term: "いえ", ipa: "ie", pos: "noun", translation: "house", example: "いえ (ie) — house" },
-        { term: "えき", ipa: "eki", pos: "noun", translation: "station", example: "えき (eki) — station" },
-        { term: "かお", ipa: "kao", pos: "noun", translation: "face", example: "かお (kao) — face" },
-        { term: "こえ", ipa: "koe", pos: "noun", translation: "voice", example: "こえ (koe) — voice" }
-      ],
-      exercises: [
-        { kind: "open", prompt: "Write in romaji: あき", answer: "aki (autumn)" },
-        { kind: "open", prompt: "Write in hiragana: k-o-e (voice)", answer: "こえ" },
-        { kind: "open", prompt: "Which character is \"ku\"?", answer: "く" }
-      ],
-      scenario: { title: "Hiragana reading game", details: "Your tutor shows you short words written only with あ–こ characters. Read each one aloud in romaji, then guess the meaning. The tutor gives friendly hints when you're stuck." }
-    }
-  },
-  {
-    id: "plan-sample-ko",
-    language: "Korean",
-    level: "Beginner",
-    lesson: {
-      id: "lesson-sample-ko",
-      title: "Ordering at a café: 주세요",
-      grammar: "polite requests with 주세요",
-      description: "One pattern unlocks every café, restaurant, and shop in Korea: [thing] 주세요 (juseyo) — \"please give me ...\". Add a number and a counter and you can order like a local.",
-      expanded: true,
-      sections: [
-        { heading: "The magic word: 주세요", body: "Put what you want before 주세요 (juseyo): 커피 주세요 (keopi juseyo) \"Coffee, please.\" 물 주세요 (mul juseyo) \"Water, please.\" It's polite enough for any café." },
-        { heading: "Counting drinks: 잔", body: "Drinks are counted with 잔 (jan) \"cup\": 한 잔 (han jan) one cup, 두 잔 (du jan) two cups. Order: thing + number + counter + 주세요 — 아메리카노 두 잔 주세요 (amerikano du jan juseyo) \"Two americanos, please.\"" },
-        { heading: "Paying and thanking", body: "얼마예요? (eolmayeyo?) \"How much is it?\" When you get your order: 감사합니다 (gamsahamnida) \"Thank you.\" You might hear 드시고 가세요? (deusigo gaseyo?) — \"For here?\"" }
-      ],
-      vocab: [
-        { term: "커피", ipa: "kʰʌpʰi", pos: "noun", translation: "coffee", example: "커피 주세요. (keopi juseyo) — Coffee, please." },
-        { term: "물", ipa: "mul", pos: "noun", translation: "water", example: "물 주세요. (mul juseyo) — Water, please." },
-        { term: "주세요", ipa: "tɕusejo", pos: "verb (polite)", translation: "please give me", example: "이거 주세요. (igeo juseyo) — This one, please." },
-        { term: "잔", ipa: "tɕan", pos: "counter", translation: "cup, glass", example: "두 잔 (du jan) — two cups" },
-        { term: "얼마예요", ipa: "ʌlmajejo", pos: "phrase", translation: "how much is it?", example: "이거 얼마예요? (igeo eolmayeyo) — How much is this?" },
-        { term: "감사합니다", ipa: "kamsahamnida", pos: "phrase", translation: "thank you", example: "감사합니다! (gamsahamnida) — Thank you!" }
-      ],
-      exercises: [
-        { kind: "open", prompt: "Order one coffee, politely.", answer: "커피 (한 잔) 주세요. (keopi han jan juseyo)" },
-        { kind: "open", prompt: "Ask how much it costs.", answer: "얼마예요? (eolmayeyo?)" },
-        { kind: "open", prompt: "Order two americanos.", answer: "아메리카노 두 잔 주세요. (amerikano du jan juseyo)" }
-      ],
-      scenario: { title: "A Seoul café counter", details: "You're at the counter of a busy café in Seoul. Greet the barista, order a drink (maybe two!), ask the price, and thank them — all with 주세요 and your new counting words." }
-    }
-  }
-];
+// Sample lessons live in samples.js (SAMPLE_PLANS_BY_LOCALE), loaded before this file.
+function samplePlans() {
+  return SAMPLE_PLANS_BY_LOCALE[state.uiLanguage] || SAMPLE_PLANS_BY_LOCALE.en;
+}
 
 const state = loadState();
 let activeView = "plansView";
@@ -210,6 +107,13 @@ let sampleLessonPreview = null;
 function leaveLanding() {
   showLanding = false;
   sampleLessonPreview = null;
+}
+
+function goHome() {
+  sampleLessonPreview = null;
+  showLanding = true;
+  switchView("plansView");
+  render();
 }
 const loadingLabels = [];
 
@@ -1058,7 +962,7 @@ function buildOnboarding() {
   hint.textContent = t("onboarding.samplesHint");
   const grid = document.createElement("div");
   grid.className = "sample-grid";
-  for (const sample of SAMPLE_PLANS) {
+  for (const sample of samplePlans()) {
     const card = document.createElement("button");
     card.type = "button";
     card.className = "sample-card";
@@ -2975,12 +2879,10 @@ function bindEvents() {
       render();
     });
   }
-  els.homeBtn?.addEventListener("click", () => {
-    sampleLessonPreview = null;
-    showLanding = true;
-    switchView("plansView");
-    render();
-  });
+  els.homeBtn?.addEventListener("click", goHome);
+  for (const el of document.querySelectorAll(".sidebar .brand-mark, .sidebar .brand h1")) {
+    el.addEventListener("click", goHome);
+  }
   els.accountTopBtn?.addEventListener("click", () => {
     if (LinguiniSync.isSignedIn()) switchView("settingsView");
     else openAuthGate();

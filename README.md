@@ -48,6 +48,7 @@ python3 server.py    # http://127.0.0.1:5173 — Python stdlib only, nothing to 
 ```
 ├── index.html / styles.css / app.js   # the whole frontend (paper-notebook theme)
 ├── i18n.js                            # 6-locale dictionary + t()
+├── samples.js                         # localized sample lessons (landing page)
 ├── sync.js                            # Supabase auth + cross-device sync
 ├── server.py                          # static + state + LLM proxy (stdlib)
 ├── functions/api/chat.js              # Cloudflare Pages Function: hosted proxy

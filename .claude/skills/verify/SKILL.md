@@ -11,7 +11,7 @@ description: Build/launch/drive recipe for verifying Linguini changes end-to-end
 python3 server.py          # serves http://127.0.0.1:5173 (static + /api/state + /api/chat)
 ```
 
-No build step. The app is index.html + styles.css + app.js + i18n.js + sync.js, loaded as plain scripts.
+No build step. The app is index.html + styles.css + app.js + i18n.js + samples.js + sync.js, loaded as plain scripts.
 
 ## Drive (headless browser)
 

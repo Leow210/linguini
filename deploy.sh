@@ -20,6 +20,6 @@ cd "$(dirname "$0")"
 
 rm -rf dist
 mkdir dist
-cp index.html styles.css app.js i18n.js sync.js dist/
+cp index.html styles.css app.js i18n.js samples.js sync.js dist/
 
 npx wrangler pages deploy dist --project-name linguini

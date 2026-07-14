@@ -23,6 +23,7 @@ tasks.register("copyWebAssets", Copy) {
         include "styles.css"
         include "app.js"
         include "i18n.js"
+        include "samples.js"
         include "sync.js"
     }
     into(generatedAssetsDir.map { it.dir("www") })
