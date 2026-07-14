@@ -19,62 +19,74 @@
           </div>
           <div>
             <h1>Linguini</h1>
-            <p>a tangled little notebook for languages</p>
+            <p data-i18n="brand.tagline">a tangled little notebook for languages</p>
           </div>
         </header>
 
         <nav class="tabs" aria-label="Workspace">
-          <button class="tab-btn active" type="button" data-view="plansView">Plans</button>
-          <button class="tab-btn" type="button" data-view="vocabView">Vocab</button>
-          <button class="tab-btn" type="button" data-view="roleplayView">Role-play</button>
-          <button class="tab-btn" type="button" data-view="charactersView">Characters</button>
-          <button class="tab-btn" type="button" data-view="settingsView">Models</button>
+          <button class="tab-btn active" type="button" data-view="plansView" data-i18n="tabs.plans">Plans</button>
+          <button class="tab-btn" type="button" data-view="vocabView" data-i18n="tabs.vocab">Vocab</button>
+          <button class="tab-btn" type="button" data-view="roleplayView" data-i18n="tabs.roleplay">Role-play</button>
+          <button class="tab-btn" type="button" data-view="charactersView" data-i18n="tabs.characters">Characters</button>
+          <button class="tab-btn" type="button" data-view="settingsView" data-i18n="tabs.models">Models</button>
         </nav>
 
         <section class="panel compact">
           <div class="panel-title">
-            <h2>Target</h2>
+            <h2 data-i18n="target.title">Target</h2>
           </div>
           <label>
-            Language
+            <span data-i18n="target.language">Language</span>
             <select id="languageSelect"></select>
           </label>
           <label>
-            Skill level
+            <span data-i18n="target.level">Skill level</span>
             <select id="levelSelect">
-              <option>Absolute beginner</option>
-              <option>Beginner</option>
-              <option>Lower intermediate</option>
-              <option>Upper intermediate</option>
-              <option>Advanced</option>
-              <option>Heritage speaker</option>
+              <option value="Absolute beginner" data-i18n="level.absoluteBeginner">Absolute beginner</option>
+              <option value="Beginner" data-i18n="level.beginner">Beginner</option>
+              <option value="Lower intermediate" data-i18n="level.lowerIntermediate">Lower intermediate</option>
+              <option value="Upper intermediate" data-i18n="level.upperIntermediate">Upper intermediate</option>
+              <option value="Advanced" data-i18n="level.advanced">Advanced</option>
+              <option value="Heritage speaker" data-i18n="level.heritageSpeaker">Heritage speaker</option>
             </select>
           </label>
           <label>
-            Teaching style
+            <span data-i18n="target.teachingStyle">Teaching style</span>
             <select id="pedagogyStyleSelect">
-              <option value="linguistic">Linguistic — IPA, glosses, terms</option>
-              <option value="layman">Plain — no jargon, English analogies</option>
+              <option value="linguistic" data-i18n="pedagogy.linguistic">Linguistic — IPA, glosses, terms</option>
+              <option value="layman" data-i18n="pedagogy.layman">Plain — no jargon, simple analogies</option>
+            </select>
+          </label>
+          <label>
+            <span data-i18n="target.uiLanguage">App language</span>
+            <select id="uiLanguageSelect">
+              <option value="en">English</option>
+              <option value="ja">日本語</option>
+              <option value="zh-Hant">繁體中文</option>
+              <option value="zh-Hans">简体中文</option>
+              <option value="ko">한국어</option>
+              <option value="es">Español</option>
             </select>
           </label>
         </section>
 
         <section class="panel compact">
           <div class="panel-title">
-            <h2>Plan prompt</h2>
+            <h2 data-i18n="planPrompt.title">Plan prompt</h2>
           </div>
           <textarea
             id="planPromptInput"
             rows="6"
+            data-i18n-placeholder="planPrompt.placeholder"
             placeholder="Example: I am upper intermediate in Russian, but I need to drill cases deeply."
           ></textarea>
-          <button id="generatePlanBtn" class="primary-btn" type="button">Generate plan</button>
+          <button id="generatePlanBtn" class="primary-btn" type="button" data-i18n="planPrompt.generate">Generate plan</button>
         </section>
 
         <section class="panel roster-panel">
           <div class="panel-title">
-            <h2>Saved plans</h2>
-            <button id="newPlanBtn" class="icon-btn" type="button" title="Create blank plan">+</button>
+            <h2 data-i18n="savedPlans.title">Saved plans</h2>
+            <button id="newPlanBtn" class="icon-btn" type="button" data-i18n-title="savedPlans.new" title="Create blank plan">+</button>
           </div>
           <div id="planList" class="stack-list" aria-label="Saved language plans"></div>
         </section>
@@ -88,16 +100,16 @@
               <h2 id="planTitle">Create or select a plan</h2>
             </div>
             <div class="header-actions">
-              <button id="addLessonBtn" class="secondary-btn" type="button">Add lesson</button>
-              <button id="generateLessonBtn" class="secondary-btn" type="button">Generate lesson</button>
-              <button id="deletePlanBtn" class="danger-btn" type="button">Delete plan</button>
+              <button id="addLessonBtn" class="secondary-btn" type="button" data-i18n="plans.addLesson">Add lesson</button>
+              <button id="generateLessonBtn" class="secondary-btn" type="button" data-i18n="plans.generateLesson">Generate lesson</button>
+              <button id="deletePlanBtn" class="danger-btn" type="button" data-i18n="plans.deletePlan">Delete plan</button>
             </div>
           </header>
 
           <section class="plan-layout">
             <aside class="lesson-sidebar">
               <div class="panel-title">
-                <h2>Lessons</h2>
+                <h2 data-i18n="lessons.title">Lessons</h2>
               </div>
               <div id="lessonList" class="stack-list"></div>
             </aside>
@@ -105,14 +117,14 @@
             <article class="lesson-pane">
               <div class="lesson-toolbar">
                 <div class="mode-toggle" role="tablist" aria-label="Lesson mode">
-                  <button id="modeStudyBtn" class="mode-btn active" type="button" role="tab">Study</button>
-                  <button id="modeEditBtn" class="mode-btn" type="button" role="tab">Edit</button>
+                  <button id="modeStudyBtn" class="mode-btn active" type="button" role="tab" data-i18n="mode.study">Study</button>
+                  <button id="modeEditBtn" class="mode-btn" type="button" role="tab" data-i18n="mode.edit">Edit</button>
                 </div>
                 <div class="lesson-toolbar-actions">
-                  <button id="startLessonPracticeBtn" class="secondary-btn" type="button">Practice this</button>
-                  <button id="regenerateLessonBtn" class="secondary-btn" type="button">Regenerate</button>
-                  <button id="saveLessonBtn" class="primary-btn" type="button">Save lesson</button>
-                  <button id="deleteLessonBtn" class="danger-btn" type="button">Delete lesson</button>
+                  <button id="startLessonPracticeBtn" class="secondary-btn" type="button" data-i18n="lesson.practiceThis">Practice this</button>
+                  <button id="regenerateLessonBtn" class="secondary-btn" type="button" data-i18n="lesson.regenerate">Regenerate</button>
+                  <button id="saveLessonBtn" class="primary-btn" type="button" data-i18n="lesson.save">Save lesson</button>
+                  <button id="deleteLessonBtn" class="danger-btn" type="button" data-i18n="lesson.delete">Delete lesson</button>
                 </div>
               </div>
 
@@ -120,61 +132,61 @@
 
               <div id="lessonEditContainer" class="lesson-edit" style="display: none;">
                 <section class="edit-block">
-                  <h3>Plan</h3>
+                  <h3 data-i18n="edit.planBlock">Plan</h3>
                   <div class="form-grid two">
                     <label>
-                      Plan title
+                      <span data-i18n="edit.planTitle">Plan title</span>
                       <input id="planTitleInput" type="text" />
                     </label>
                     <label>
-                      Focus
-                      <input id="planFocusInput" type="text" placeholder="Cases, travel speaking, literacy..." />
+                      <span data-i18n="edit.focus">Focus</span>
+                      <input id="planFocusInput" type="text" data-i18n-placeholder="edit.focusPh" placeholder="Cases, travel speaking, literacy..." />
                     </label>
                   </div>
                   <label>
-                    Plan notes
+                    <span data-i18n="edit.planNotes">Plan notes</span>
                     <textarea id="planNotesInput" rows="3"></textarea>
                   </label>
                 </section>
 
                 <section class="edit-block">
-                  <h3>Lesson basics</h3>
+                  <h3 data-i18n="edit.lessonBasics">Lesson basics</h3>
                   <div class="form-grid two">
                     <label>
-                      Lesson title
+                      <span data-i18n="edit.lessonTitle">Lesson title</span>
                       <input id="lessonTitleInput" type="text" />
                     </label>
                     <label>
-                      Grammar concept
+                      <span data-i18n="edit.grammar">Grammar concept</span>
                       <input id="lessonGrammarInput" type="text" />
                     </label>
                   </div>
                   <label>
-                    Description (shown at top of the lesson and used as the contract when generating the full lesson)
-                    <textarea id="lessonDescriptionInput" rows="3" placeholder="2-3 sentences naming the specific subtopics, forms, and use cases."></textarea>
+                    <span data-i18n="edit.description">Description (shown at top of the lesson and used as the contract when generating the full lesson)</span>
+                    <textarea id="lessonDescriptionInput" rows="3" data-i18n-placeholder="edit.descriptionPh" placeholder="2-3 sentences naming the specific subtopics, forms, and use cases."></textarea>
                   </label>
                 </section>
 
                 <section class="edit-block">
                   <div class="edit-block-head">
-                    <h3>Sections</h3>
-                    <button id="addSectionBtn" class="secondary-btn small" type="button">+ Add section</button>
+                    <h3 data-i18n="edit.sections">Sections</h3>
+                    <button id="addSectionBtn" class="secondary-btn small" type="button" data-i18n="edit.addSection">+ Add section</button>
                   </div>
                   <div id="lessonSectionsContainer" class="edit-rows"></div>
                 </section>
 
                 <section class="edit-block">
                   <div class="edit-block-head">
-                    <h3>Vocabulary</h3>
-                    <button id="addVocabRowBtn" class="secondary-btn small" type="button">+ Add word</button>
+                    <h3 data-i18n="edit.vocabulary">Vocabulary</h3>
+                    <button id="addVocabRowBtn" class="secondary-btn small" type="button" data-i18n="edit.addWord">+ Add word</button>
                   </div>
                   <div id="lessonVocabRows" class="edit-rows"></div>
                 </section>
 
                 <section class="edit-block">
                   <div class="edit-block-head">
-                    <h3>Exercises</h3>
-                    <button id="addExerciseBtn" class="secondary-btn small" type="button">+ Add exercise</button>
+                    <h3 data-i18n="edit.exercises">Exercises</h3>
+                    <button id="addExerciseBtn" class="secondary-btn small" type="button" data-i18n="edit.addExercise">+ Add exercise</button>
                   </div>
                   <div id="lessonExerciseRows" class="edit-rows"></div>
                 </section>
@@ -186,24 +198,24 @@
         <section id="vocabView" class="view">
           <header class="workspace-header">
             <div>
-              <p>Vocab bank</p>
-              <h2>Every word, every lesson</h2>
+              <p data-i18n="vocab.kicker">Vocab bank</p>
+              <h2 data-i18n="vocab.headline">Every word, every lesson</h2>
             </div>
             <div class="header-actions">
-              <button id="vocabAddBtn" class="primary-btn small" type="button">+ Add word</button>
-              <input id="vocabSearchInput" type="search" placeholder="Search words, translations, IPA..." class="vocab-search" />
+              <button id="vocabAddBtn" class="primary-btn small" type="button" data-i18n="vocab.add">+ Add word</button>
+              <input id="vocabSearchInput" type="search" data-i18n-placeholder="vocab.searchPh" placeholder="Search words, translations, IPA..." class="vocab-search" />
             </div>
           </header>
           <form id="vocabAddForm" class="vocab-add-form" hidden>
-            <label>Language <select id="vocabAddLanguage"></select></label>
-            <label>Word <input id="vocabAddTerm" type="text" required /></label>
-            <label>Translation <input id="vocabAddTranslation" type="text" /></label>
-            <label>IPA <input id="vocabAddIpa" type="text" /></label>
-            <label>Part of speech <input id="vocabAddPos" type="text" /></label>
-            <label class="wide">Example sentence <input id="vocabAddExample" type="text" /></label>
+            <label><span data-i18n="vocab.language">Language</span> <select id="vocabAddLanguage"></select></label>
+            <label><span data-i18n="vocab.word">Word</span> <input id="vocabAddTerm" type="text" required /></label>
+            <label><span data-i18n="vocab.translation">Translation</span> <input id="vocabAddTranslation" type="text" /></label>
+            <label><span data-i18n="vocab.ipa">IPA</span> <input id="vocabAddIpa" type="text" /></label>
+            <label><span data-i18n="vocab.pos">Part of speech</span> <input id="vocabAddPos" type="text" /></label>
+            <label class="wide"><span data-i18n="vocab.example">Example sentence</span> <input id="vocabAddExample" type="text" /></label>
             <div class="vocab-add-actions">
-              <button id="vocabAddSaveBtn" class="primary-btn small" type="submit">Save word</button>
-              <button id="vocabAddCancelBtn" class="secondary-btn small" type="button">Cancel</button>
+              <button id="vocabAddSaveBtn" class="primary-btn small" type="submit" data-i18n="vocab.save">Save word</button>
+              <button id="vocabAddCancelBtn" class="secondary-btn small" type="button" data-i18n="vocab.cancel">Cancel</button>
             </div>
           </form>
           <div class="vocab-meta">
@@ -219,8 +231,8 @@
               <h2 id="chatTitle">Choose a character and scenario</h2>
             </div>
             <div class="header-actions">
-              <button id="newChatBtn" class="secondary-btn" type="button">New chat</button>
-              <button id="saveScenarioBtn" class="secondary-btn" type="button">Save scenario</button>
+              <button id="newChatBtn" class="secondary-btn" type="button" data-i18n="chat.new">New chat</button>
+              <button id="saveScenarioBtn" class="secondary-btn" type="button" data-i18n="chat.saveScenario">Save scenario</button>
             </div>
           </header>
 
@@ -228,70 +240,70 @@
 
           <section class="practice-setup">
             <label>
-              Character
+              <span data-i18n="chat.character">Character</span>
               <select id="characterSelect"></select>
             </label>
             <label>
-              Scenario
+              <span data-i18n="chat.scenario">Scenario</span>
               <select id="scenarioSelect"></select>
             </label>
             <label>
-              Difficulty
+              <span data-i18n="chat.difficulty">Difficulty</span>
               <select id="difficultySelect">
-                <option>A1 survival</option>
-                <option>A2 simple conversation</option>
-                <option>B1 independent</option>
-                <option>B2 nuanced</option>
-                <option>C1 natural</option>
+                <option value="A1 survival" data-i18n="difficulty.a1">A1 survival</option>
+                <option value="A2 simple conversation" data-i18n="difficulty.a2">A2 simple conversation</option>
+                <option value="B1 independent" data-i18n="difficulty.b1">B1 independent</option>
+                <option value="B2 nuanced" data-i18n="difficulty.b2">B2 nuanced</option>
+                <option value="C1 natural" data-i18n="difficulty.c1">C1 natural</option>
               </select>
             </label>
             <label>
-              Test focus
-              <input id="testFocusInput" type="text" placeholder="Past tense, dative case, food vocabulary..." />
+              <span data-i18n="chat.testFocus">Test focus</span>
+              <input id="testFocusInput" type="text" data-i18n-placeholder="chat.testFocusPh" placeholder="Past tense, dative case, food vocabulary..." />
             </label>
             <label class="wide">
-              Scenario details
+              <span data-i18n="chat.scenarioDetails">Scenario details</span>
               <textarea id="scenarioText" rows="4"></textarea>
             </label>
           </section>
 
           <section id="messages" class="messages" aria-live="polite"></section>
           <form id="chatForm" class="composer">
-            <textarea id="messageInput" rows="1" placeholder="Reply in your target language..." required></textarea>
-            <button id="sendBtn" class="primary-btn" type="submit">Send</button>
+            <textarea id="messageInput" rows="1" data-i18n-placeholder="chat.messagePh" placeholder="Reply in your target language..." required></textarea>
+            <button id="sendBtn" class="primary-btn" type="submit" data-i18n="chat.send">Send</button>
           </form>
         </section>
 
         <section id="charactersView" class="view">
           <header class="workspace-header">
             <div>
-              <p>Character lab</p>
-              <h2>Build people to talk to</h2>
+              <p data-i18n="char.kicker">Character lab</p>
+              <h2 data-i18n="char.headline">Build people to talk to</h2>
             </div>
-            <button id="newCharacterBtn" class="primary-btn" type="button">New character</button>
+            <button id="newCharacterBtn" class="primary-btn" type="button" data-i18n="char.new">New character</button>
           </header>
           <section class="split-layout">
             <div id="characterList" class="stack-list"></div>
             <article class="editor-panel">
               <label>
-                Name
+                <span data-i18n="char.name">Name</span>
                 <input id="characterNameInput" type="text" />
               </label>
               <label>
-                Role / source
+                <span data-i18n="char.role">Role / source</span>
                 <input id="characterRoleInput" type="text" />
               </label>
               <label>
-                Personality
+                <span data-i18n="char.personality">Personality</span>
                 <textarea id="characterPersonalityInput" rows="5"></textarea>
               </label>
               <label>
-                Teaching style
+                <span data-i18n="char.teaching">Teaching style</span>
                 <textarea id="characterTeachingInput" rows="5"></textarea>
               </label>
               <div class="lesson-actions">
-                <button id="saveCharacterBtn" class="primary-btn" type="button">Save character</button>
-                <button id="deleteCharacterBtn" class="danger-btn" type="button">Delete character</button>
+                <button id="saveCharacterBtn" class="primary-btn" type="button" data-i18n="char.save">Save character</button>
+                <button id="deleteCharacterBtn" class="danger-btn" type="button" data-i18n="char.delete">Delete character</button>
               </div>
             </article>
           </section>
@@ -300,69 +312,91 @@
         <section id="settingsView" class="view">
           <header class="workspace-header">
             <div>
-              <p>Model routing</p>
-              <h2>Wire up the brains</h2>
+              <p data-i18n="models.kicker">Model routing</p>
+              <h2 data-i18n="models.headline">Wire up the brains</h2>
             </div>
             <div class="header-actions">
-              <button id="testConnectionBtn" class="secondary-btn" type="button">Test chat route</button>
-              <button id="saveRoutesBtn" class="primary-btn" type="button">Save settings</button>
+              <button id="testConnectionBtn" class="secondary-btn" type="button" data-i18n="models.test">Test chat route</button>
+              <button id="saveRoutesBtn" class="primary-btn" type="button" data-i18n="models.save">Save settings</button>
               <span id="saveRoutesStatus" class="save-status" aria-live="polite"></span>
             </div>
           </header>
+          <section class="panel compact" id="accountPanel">
+            <div class="panel-title">
+              <h2 data-i18n="account.title">Account</h2>
+            </div>
+            <p class="muted" data-i18n="account.hint">Sign in to sync your plans, vocab, chats, and API keys across devices. Until you sign in, data stays on this device.</p>
+            <div class="form-grid two">
+              <label>
+                <span data-i18n="account.email">Email</span>
+                <input id="accountEmailInput" type="email" autocomplete="email" />
+              </label>
+              <label>
+                <span data-i18n="account.password">Password</span>
+                <input id="accountPasswordInput" type="password" autocomplete="current-password" />
+              </label>
+            </div>
+            <div class="account-actions">
+              <button id="accountSignInBtn" class="primary-btn small" type="button" data-i18n="account.signIn">Sign in</button>
+              <button id="accountSignUpBtn" class="secondary-btn small" type="button" data-i18n="account.signUp">Create account</button>
+              <button id="accountSignOutBtn" class="danger-btn small" type="button" hidden data-i18n="account.signOut">Sign out</button>
+            </div>
+            <p id="accountStatus" class="muted account-status" aria-live="polite"></p>
+          </section>
           <section class="settings-grid">
             <form class="panel compact" onsubmit="event.preventDefault(); return false;">
               <div class="panel-title">
-                <h2>Plan outline</h2>
+                <h2 data-i18n="route.planner">Plan outline</h2>
               </div>
-              <label>Preset <select class="route-preset" data-kind="planner"></select></label>
-              <label>Endpoint <input id="plannerEndpointInput" type="url" /></label>
-              <label>Model <input id="plannerModelInput" type="text" /></label>
-              <label>API key, optional <input id="plannerKeyInput" type="password" autocomplete="off" /></label>
-              <button class="apply-to-all secondary-btn small" data-kind="planner" type="button">Apply to all routes</button>
+              <label><span data-i18n="models.preset">Preset</span> <select class="route-preset" data-kind="planner"></select></label>
+              <label><span data-i18n="models.endpoint">Endpoint</span> <input id="plannerEndpointInput" type="url" /></label>
+              <label><span data-i18n="models.model">Model</span> <input id="plannerModelInput" type="text" /></label>
+              <label><span data-i18n="models.apiKey">API key, optional</span> <input id="plannerKeyInput" type="password" autocomplete="off" /></label>
+              <button class="apply-to-all secondary-btn small" data-kind="planner" type="button" data-i18n="models.applyAll">Apply to all routes</button>
             </form>
             <form class="panel compact" onsubmit="event.preventDefault(); return false;">
               <div class="panel-title">
-                <h2>Lesson generation</h2>
+                <h2 data-i18n="route.lesson">Lesson generation</h2>
               </div>
-              <label>Preset <select class="route-preset" data-kind="lesson"></select></label>
-              <label>Endpoint <input id="lessonEndpointInput" type="url" /></label>
-              <label>Model <input id="lessonModelInput" type="text" /></label>
-              <label>API key, optional <input id="lessonKeyInput" type="password" autocomplete="off" /></label>
+              <label><span data-i18n="models.preset">Preset</span> <select class="route-preset" data-kind="lesson"></select></label>
+              <label><span data-i18n="models.endpoint">Endpoint</span> <input id="lessonEndpointInput" type="url" /></label>
+              <label><span data-i18n="models.model">Model</span> <input id="lessonModelInput" type="text" /></label>
+              <label><span data-i18n="models.apiKey">API key, optional</span> <input id="lessonKeyInput" type="password" autocomplete="off" /></label>
             </form>
             <form class="panel compact" onsubmit="event.preventDefault(); return false;">
               <div class="panel-title">
-                <h2>Quiz & scenario</h2>
+                <h2 data-i18n="route.practice">Quiz &amp; scenario</h2>
               </div>
-              <label>Preset <select class="route-preset" data-kind="practice"></select></label>
-              <label>Endpoint <input id="practiceEndpointInput" type="url" /></label>
-              <label>Model <input id="practiceModelInput" type="text" /></label>
-              <label>API key, optional <input id="practiceKeyInput" type="password" autocomplete="off" /></label>
+              <label><span data-i18n="models.preset">Preset</span> <select class="route-preset" data-kind="practice"></select></label>
+              <label><span data-i18n="models.endpoint">Endpoint</span> <input id="practiceEndpointInput" type="url" /></label>
+              <label><span data-i18n="models.model">Model</span> <input id="practiceModelInput" type="text" /></label>
+              <label><span data-i18n="models.apiKey">API key, optional</span> <input id="practiceKeyInput" type="password" autocomplete="off" /></label>
             </form>
             <form class="panel compact" onsubmit="event.preventDefault(); return false;">
               <div class="panel-title">
-                <h2>Role-play chat</h2>
+                <h2 data-i18n="route.chat">Role-play chat</h2>
               </div>
-              <label>Preset <select class="route-preset" data-kind="chat"></select></label>
-              <label>Endpoint <input id="chatEndpointInput" type="url" /></label>
-              <label>Model <input id="chatModelInput" type="text" /></label>
-              <label>API key, optional <input id="chatKeyInput" type="password" autocomplete="off" /></label>
+              <label><span data-i18n="models.preset">Preset</span> <select class="route-preset" data-kind="chat"></select></label>
+              <label><span data-i18n="models.endpoint">Endpoint</span> <input id="chatEndpointInput" type="url" /></label>
+              <label><span data-i18n="models.model">Model</span> <input id="chatModelInput" type="text" /></label>
+              <label><span data-i18n="models.apiKey">API key, optional</span> <input id="chatKeyInput" type="password" autocomplete="off" /></label>
             </form>
             <form class="panel compact" onsubmit="event.preventDefault(); return false;">
               <div class="panel-title">
-                <h2>Error checking</h2>
+                <h2 data-i18n="route.correction">Error checking</h2>
               </div>
-              <label>Preset <select class="route-preset" data-kind="correction"></select></label>
-              <label>Endpoint <input id="correctionEndpointInput" type="url" /></label>
-              <label>Model <input id="correctionModelInput" type="text" /></label>
-              <label>API key, optional <input id="correctionKeyInput" type="password" autocomplete="off" /></label>
+              <label><span data-i18n="models.preset">Preset</span> <select class="route-preset" data-kind="correction"></select></label>
+              <label><span data-i18n="models.endpoint">Endpoint</span> <input id="correctionEndpointInput" type="url" /></label>
+              <label><span data-i18n="models.model">Model</span> <input id="correctionModelInput" type="text" /></label>
+              <label><span data-i18n="models.apiKey">API key, optional</span> <input id="correctionKeyInput" type="password" autocomplete="off" /></label>
             </form>
           </section>
           <section class="panel compact">
-            <h2>Recommended setup</h2>
-            <p class="muted">
+            <h2 data-i18n="models.recommended">Recommended setup</h2>
+            <p class="muted" data-i18n-html="models.help1">
               Picking the Anthropic preset enables native Claude support — your Claude API key works directly (the app translates the OpenAI-format request into Anthropic's schema and back). LM Studio, OpenAI, Google Gemini (via the <code>/v1beta/openai/</code> compat layer), DeepSeek, Kimi/Moonshot, and OpenRouter all work out of the box.
             </p>
-            <p class="muted">
+            <p class="muted" data-i18n="models.help2">
               Common split: a strong API model (Claude / GPT) for lesson generation, a fast local model (LM Studio Gemma) for chat and correction. Plan outline is short, so any model works there.
             </p>
           </section>
@@ -375,6 +409,8 @@
       <span id="loadingBadgeText">Working...</span>
     </div>
 
+    <script src="i18n.js"></script>
+    <script src="sync.js"></script>
     <script src="app.js"></script>
   </body>
 </html>

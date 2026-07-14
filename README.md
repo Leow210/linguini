@@ -20,6 +20,68 @@ That's the whole setup. The server is pure Python stdlib (no `pip install` step)
 
 ---
 
+## Host it online (free, Cloudflare Pages)
+
+The frontend deploys as static files plus one Pages Function (`functions/api/chat.js`) that replicates server.py's LLM proxy, so every provider works from the hosted site exactly like on localhost.
+
+One-time setup (free Cloudflare account):
+
+```sh
+npx wrangler login
+npx wrangler pages project create linguini
+```
+
+Then every deploy is:
+
+```sh
+./deploy.sh
+```
+
+The script stages only the web files into `dist/` — `server.py`, `android/`, and especially `data/` (your saved state and API keys) are never uploaded. Your site lands at `https://linguini.pages.dev` (or similar).
+
+Notes for the hosted site:
+
+- **State** lives in each browser's localStorage, or in your account if you sign in (see below). There is no `/api/state` server.
+- **Remote providers** (Claude, OpenAI, ...) are proxied through the Pages Function — no CORS issues, keys still sent per-request from your browser.
+- **Local models**: the hosted page calls `http://127.0.0.1:1234` directly from your browser (localhost is exempt from mixed-content blocking). Enable **CORS** in LM Studio's server settings for this to work.
+
+---
+
+## Accounts & sync (free, Supabase)
+
+Sign in on the Models tab to sync everything — plans, lessons, vocab, chats, characters, and your API keys — across devices (web + Android). Signed out, the app behaves exactly as before: everything stays in localStorage on the device.
+
+One-time setup (free Supabase account):
+
+1. Create a project at [supabase.com](https://supabase.com).
+2. **Authentication → Sign In / Up → Email**: turn **off** "Confirm email" (otherwise sign-up requires an email round-trip).
+3. **SQL Editor** → paste and run:
+
+   ```sql
+   create table public.app_state (
+     user_id uuid primary key references auth.users (id) on delete cascade,
+     state jsonb not null,
+     updated_at timestamptz not null default now()
+   );
+   alter table public.app_state enable row level security;
+   create policy "Users manage own state" on public.app_state
+     for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+   ```
+
+4. **Settings → API**: copy the **Project URL** and the **anon public** key into the two constants at the top of `sync.js`. Both are safe to commit — row-level security is the actual boundary; each user can only read/write their own row.
+
+How sync behaves: last write wins. The app pulls your row on boot, after sign-in, and when the tab regains focus; it pushes (debounced ~1.5 s) after every change. On first sign-in from a device, an existing cloud copy wins; if there is none, the device's local data is uploaded. Your API keys are part of the synced state — that's what makes your model routes work instantly on your phone.
+
+> Supabase's free tier pauses projects after about a week of inactivity. Nothing is lost — restore it with one click in their dashboard.
+
+---
+
+## UI language
+
+The **App language** selector in the sidebar switches the entire interface between English, 日本語, 繁體中文, 简体中文, 한국어, and Español. It also steers generation: lesson explanations, exercise instructions, translations, tutor answers, and corrections are written in your UI language, while the target language being taught (and the JSON wire format) stays untouched. Target-language names in the Language dropdown stay in English, since they're stored values that feed the prompts.
+
+---
+
 ## Configure your models
 
 Open the **Models** tab. There are five routes; each can point to a different provider:
@@ -176,6 +238,11 @@ When you submit a generation request:
 ├── index.html             # Web app shell
 ├── styles.css             # Paper-notebook theme
 ├── app.js                 # All client logic — state, render, prompts
+├── i18n.js                # UI translations (en/ja/zh-Hant/zh-Hans/ko/es) + t()
+├── sync.js                # Supabase accounts + cross-device state sync
+├── deploy.sh              # Stage web files into dist/ and deploy to Cloudflare Pages
+├── functions/
+│   └── api/chat.js        # Cloudflare Pages Function: hosted LLM proxy
 ├── data/
 │   ├── linguini.sqlite3   # Single-row state store
 │   └── app-state.json     # Human-readable mirror
@@ -190,4 +257,4 @@ When you submit a generation request:
 
 ## What's it for, again?
 
-You pick a language. Linguini drafts a multi-week plan. You open a lesson, the AI fleshes it out into a real teaching page with examples and a vocab table. You take a quiz, get marked. You ask the embedded tutor a question. You jump into a role-play with a character to use what you learned. Every word you see ends up in your vocab bank. Everything saves locally. No accounts, no cloud.
+You pick a language. Linguini drafts a multi-week plan. You open a lesson, the AI fleshes it out into a real teaching page with examples and a vocab table. You take a quiz, get marked. You ask the embedded tutor a question. You jump into a role-play with a character to use what you learned. Every word you see ends up in your vocab bank. Everything saves locally — and syncs across your devices if you sign in.

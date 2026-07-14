@@ -13,6 +13,11 @@ venv/
 # --- macOS ---
 .DS_Store
 
+# --- Cloudflare Pages deploy staging ---
+dist/
+.wrangler/
+node_modules/
+
 # --- Editors / IDE ---
 .idea/
 .vscode/

@@ -19,13 +19,10 @@ const NON_LATIN_LANGUAGES = new Set([
 
 const BEGINNER_LEVELS = new Set(["Absolute beginner", "Beginner"]);
 
-const ROUTE_LABELS = {
-  planner: "Plan outline",
-  lesson: "Lesson generation",
-  practice: "Quiz & scenario",
-  chat: "Role-play chat",
-  correction: "Error checking"
-};
+const LOCAL_HOSTS = ["127.0.0.1", "localhost", "::1"];
+// The Python dev server and the Android in-app server both live on localhost.
+// On a hosted origin (Cloudflare Pages) there is no /api/state endpoint.
+const HAS_STATE_SERVER = LOCAL_HOSTS.includes(window.location.hostname);
 
 const LEVEL_TO_DIFFICULTY = {
   "Absolute beginner": "A1 survival",
@@ -93,6 +90,13 @@ const els = {
   languageSelect: document.querySelector("#languageSelect"),
   levelSelect: document.querySelector("#levelSelect"),
   pedagogyStyleSelect: document.querySelector("#pedagogyStyleSelect"),
+  uiLanguageSelect: document.querySelector("#uiLanguageSelect"),
+  accountEmailInput: document.querySelector("#accountEmailInput"),
+  accountPasswordInput: document.querySelector("#accountPasswordInput"),
+  accountSignInBtn: document.querySelector("#accountSignInBtn"),
+  accountSignUpBtn: document.querySelector("#accountSignUpBtn"),
+  accountSignOutBtn: document.querySelector("#accountSignOutBtn"),
+  accountStatus: document.querySelector("#accountStatus"),
   planPromptInput: document.querySelector("#planPromptInput"),
   generatePlanBtn: document.querySelector("#generatePlanBtn"),
   newPlanBtn: document.querySelector("#newPlanBtn"),
@@ -221,6 +225,7 @@ function withDefaults(saved) {
     language: saved.language || "Russian",
     level: saved.level || "Upper intermediate",
     pedagogyStyle: saved.pedagogyStyle === "layman" ? "layman" : "linguistic",
+    uiLanguage: I18N_LOCALES.includes(saved.uiLanguage) ? saved.uiLanguage : "en",
     currentPlanId: saved.currentPlanId || "",
     currentLessonId: saved.currentLessonId || "",
     currentLessonMode: saved.currentLessonMode || "study",
@@ -425,6 +430,9 @@ function saveState() {
   state.language = els.languageSelect.value;
   state.level = els.levelSelect.value;
   state.pedagogyStyle = els.pedagogyStyleSelect?.value === "layman" ? "layman" : "linguistic";
+  if (els.uiLanguageSelect) {
+    state.uiLanguage = I18N_LOCALES.includes(els.uiLanguageSelect.value) ? els.uiLanguageSelect.value : "en";
+  }
   state.currentLessonId = activeLessonId;
   state.currentLessonMode = activeLessonMode;
   state.currentCharacterId = activeCharacterId;
@@ -435,17 +443,18 @@ function saveState() {
   state.routes.correction = readRoute("correction");
   syncProviderProfilesFromRoutes();
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  if (location.protocol.startsWith("http")) {
+  if (HAS_STATE_SERVER) {
     fetch("/api/state", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(state)
     }).catch(() => {});
   }
+  if (LinguiniSync.isSignedIn()) LinguiniSync.schedulePush(state);
 }
 
 async function hydrateStateFromServer() {
-  if (!location.protocol.startsWith("http")) return;
+  if (!HAS_STATE_SERVER) return;
   try {
     const response = await fetch("/api/state", { cache: "no-store" });
     if (!response.ok) return;
@@ -458,6 +467,15 @@ async function hydrateStateFromServer() {
   } catch {
     // localStorage fallback
   }
+}
+
+function applyRemoteState(row) {
+  if (!row || !row.state || typeof row.state !== "object") return;
+  Object.assign(state, withDefaults(row.state));
+  activeLessonId = state.currentLessonId;
+  activeCharacterId = state.currentCharacterId;
+  activeLessonMode = state.currentLessonMode === "edit" ? "edit" : "study";
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
 function readRoute(kind) {
@@ -605,13 +623,33 @@ async function runWithLoading(buttons, busyLabel, taskLabel, fn) {
 
 /* -------------------- script policy -------------------- */
 
+function uiLanguageName() {
+  return UI_LANGUAGE_NAMES[state.uiLanguage] || "English";
+}
+
+// Instructional/meta content (explanations, instructions, translations,
+// feedback) is generated in the learner's interface language. The taught
+// target language and the JSON wire format stay untouched.
+function uiLanguageDirective() {
+  if (!state.uiLanguage || state.uiLanguage === "en") return "";
+  const name = uiLanguageName();
+  return [
+    `INTERFACE LANGUAGE — the learner's app language is ${name}:`,
+    `  - Write ALL explanations, instructions, descriptions, section prose, exercise prompts' instructional wording, translations, glosses, and feedback in ${name}.`,
+    `  - The "translation" fields translate target-language material INTO ${name}.`,
+    "  - Keep the example words and sentences being taught in the target language exactly as the script policy requires.",
+    "  - Keep every JSON key, schema field name, and required structural marker (e.g. CORRECT / WRONG) in English exactly as specified elsewhere in this prompt."
+  ].join("\n");
+}
+
 function pedagogyPolicy(style) {
+  const lang = uiLanguageName();
   if (style === "layman") {
     return [
       "PEDAGOGY — write for a learner with NO linguistics background:",
-      "  - Do NOT use IPA. In any field labelled IPA, write a plain English pronunciation hint instead (e.g. \"kah-ZAH\", \"sounds like 'sh' in 'shoe'\").",
-      "  - Do NOT use Leipzig glosses or interlinear morphological breakdowns. Explain grammar in plain English next to examples (e.g. \"the -ed ending tells you this happened in the past\").",
-      "  - Avoid linguistic jargon — skip terms like morpheme, allophone, valency, ergativity, agglutinative, aspect marker, accusative, etc. Translate them into everyday phrasing (e.g. say \"the form used when a word is the object\" instead of \"accusative case\").",
+      `  - Do NOT use IPA. In any field labelled IPA, write a plain ${lang} pronunciation hint instead (e.g. \"kah-ZAH\", \"sounds like 'sh' in 'shoe'\").`,
+      `  - Do NOT use Leipzig glosses or interlinear morphological breakdowns. Explain grammar in plain ${lang} next to examples (e.g. \"the -ed ending tells you this happened in the past\").`,
+      `  - Avoid linguistic jargon — skip terms like morpheme, allophone, valency, ergativity, agglutinative, aspect marker, accusative, etc. Translate them into everyday phrasing (e.g. say \"the form used when a word is the object\" instead of \"accusative case\").`,
       "  - Friendly teacher voice with practical analogies, not linguist voice. The learner is here to talk, not analyze."
     ].join("\n");
   }
@@ -652,6 +690,40 @@ function render() {
   renderMessages();
   renderCharacters();
   renderVocabBank();
+  renderAccountPanel();
+}
+
+function renderAccountPanel() {
+  if (!els.accountStatus) return;
+  const signedIn = LinguiniSync.isSignedIn();
+  if (els.accountSignInBtn) els.accountSignInBtn.hidden = signedIn;
+  if (els.accountSignUpBtn) els.accountSignUpBtn.hidden = signedIn;
+  if (els.accountSignOutBtn) els.accountSignOutBtn.hidden = !signedIn;
+  if (els.accountEmailInput) els.accountEmailInput.closest("label").hidden = signedIn;
+  if (els.accountPasswordInput) els.accountPasswordInput.closest("label").hidden = signedIn;
+  if (!LinguiniSync.isConfigured()) {
+    els.accountStatus.textContent = t("account.notConfigured");
+  } else if (signedIn) {
+    els.accountStatus.textContent = t("account.signedInAs", { email: LinguiniSync.userEmail() });
+  } else {
+    els.accountStatus.textContent = t("account.signedOut");
+  }
+}
+
+function refreshLocale() {
+  setLocale(state.uiLanguage);
+  applyStaticTranslations();
+}
+
+async function pullRemoteState() {
+  const before = LinguiniSync.lastSyncedAt();
+  const row = await LinguiniSync.pull();
+  if (row && row.updated_at !== before) {
+    applyRemoteState(row);
+    refreshLocale();
+    render();
+  }
+  return row;
 }
 
 function renderLanguages() {
@@ -666,6 +738,7 @@ function renderLanguages() {
   els.languageSelect.value = state.language;
   els.levelSelect.value = state.level;
   if (els.pedagogyStyleSelect) els.pedagogyStyleSelect.value = state.pedagogyStyle || "linguistic";
+  if (els.uiLanguageSelect) els.uiLanguageSelect.value = state.uiLanguage || "en";
 }
 
 function populateRoutePresets() {
@@ -743,7 +816,7 @@ function renderPlans() {
       button.classList.toggle("active", plan.id === state.currentPlanId);
       button.innerHTML = `<strong></strong><span></span>`;
       button.querySelector("strong").textContent = plan.title;
-      button.querySelector("span").textContent = `${plan.level} - ${plan.lessons.length} lessons`;
+      button.querySelector("span").textContent = t("plans.cardMeta", { level: levelLabel(plan.level), count: plan.lessons.length });
       button.addEventListener("click", () => {
         state.currentPlanId = plan.id;
         activeLessonId = plan.lessons[0]?.id || "";
@@ -767,8 +840,8 @@ function groupBy(items, getKey) {
 function renderPlanEditor() {
   const plan = currentPlan();
   const lesson = currentLesson();
-  els.planKicker.textContent = plan ? `${plan.language} - ${plan.level}` : "Language plan";
-  els.planTitle.textContent = plan?.title || "Create or select a plan";
+  els.planKicker.textContent = plan ? `${plan.language} - ${levelLabel(plan.level)}` : t("plans.kicker");
+  els.planTitle.textContent = plan?.title || t("plans.selectOrCreate");
   renderLessons(plan, lesson);
   renderLessonMode(plan, lesson);
 }
@@ -787,7 +860,7 @@ function renderLessonStudy(plan, lesson) {
   if (!plan || !lesson) {
     const empty = document.createElement("div");
     empty.className = "empty-state";
-    empty.textContent = plan ? "Add a lesson to start studying." : "Generate a plan or create a blank one to begin.";
+    empty.textContent = plan ? t("study.emptyNoLesson") : t("study.emptyNoPlan");
     els.lessonStudyContainer.append(empty);
     return;
   }
@@ -796,7 +869,7 @@ function renderLessonStudy(plan, lesson) {
   header.className = "study-header";
   const kicker = document.createElement("p");
   kicker.className = "study-kicker";
-  kicker.textContent = lesson.grammar || "Lesson";
+  kicker.textContent = lesson.grammar || t("lesson.fallbackTag");
   const title = document.createElement("h3");
   title.className = "study-title";
   title.textContent = lesson.title;
@@ -833,7 +906,7 @@ function renderLessonStudy(plan, lesson) {
   }
 
   if (lesson.vocab.length) {
-    els.lessonStudyContainer.append(buildVocabTable(lesson.vocab, "Vocabulary"));
+    els.lessonStudyContainer.append(buildVocabTable(lesson.vocab, t("study.vocabulary")));
   }
 
   const buildingPractice = generatingPractice.has(lesson.id);
@@ -841,14 +914,14 @@ function renderLessonStudy(plan, lesson) {
     const wrap = document.createElement("section");
     wrap.className = "study-exercises";
     const heading = document.createElement("h4");
-    heading.textContent = "Try these";
+    heading.textContent = t("study.tryThese");
     wrap.append(heading);
     for (const [index, exercise] of lesson.exercises.entries()) {
       wrap.append(buildExerciseCard(plan, lesson, exercise, index));
     }
     els.lessonStudyContainer.append(wrap);
   } else if (buildingPractice) {
-    els.lessonStudyContainer.append(buildPracticePlaceholder("Building exercises..."));
+    els.lessonStudyContainer.append(buildPracticePlaceholder(t("study.buildingExercises")));
   }
 
   if (lesson.scenario && lesson.scenario.details) {
@@ -856,7 +929,7 @@ function renderLessonStudy(plan, lesson) {
   } else if (buildingPractice && !lesson.exercises.length) {
     // single placeholder already covers both
   } else if (buildingPractice) {
-    els.lessonStudyContainer.append(buildPracticePlaceholder("Building practice scenario..."));
+    els.lessonStudyContainer.append(buildPracticePlaceholder(t("study.buildingScenario")));
   }
 
   els.lessonStudyContainer.append(buildLessonChatPanel(plan, lesson));
@@ -878,16 +951,16 @@ function buildScenarioCard(plan, lesson) {
   card.className = "scenario-card";
   const kicker = document.createElement("p");
   kicker.className = "scenario-kicker";
-  kicker.textContent = "Practice scenario";
+  kicker.textContent = t("study.scenarioKicker");
   const heading = document.createElement("h4");
-  heading.textContent = lesson.scenario.title || "Practice scenario";
+  heading.textContent = lesson.scenario.title || t("study.scenarioKicker");
   const details = document.createElement("p");
   details.className = "scenario-details";
   details.textContent = lesson.scenario.details;
   const action = document.createElement("button");
   action.type = "button";
   action.className = "primary-btn";
-  action.textContent = "Start role-play";
+  action.textContent = t("study.startRoleplay");
   action.addEventListener("click", () => startLessonPractice());
   card.append(kicker, heading, details, action);
   return card;
@@ -898,24 +971,24 @@ function renderStubLessonStudy(plan, lesson) {
     const wrap = document.createElement("section");
     wrap.className = "stub-description";
     const heading = document.createElement("h4");
-    heading.textContent = "What this lesson covers";
+    heading.textContent = t("study.covers");
     const body = document.createElement("p");
     body.textContent = lesson.description;
     wrap.append(heading, body);
     els.lessonStudyContainer.append(wrap);
   }
   if (lesson.vocab.length) {
-    els.lessonStudyContainer.append(buildVocabTable(lesson.vocab, "Starter vocabulary"));
+    els.lessonStudyContainer.append(buildVocabTable(lesson.vocab, t("study.starterVocab")));
   }
   const stubCard = document.createElement("section");
   stubCard.className = "stub-cta";
   const text = document.createElement("p");
   text.className = "stub-text";
-  text.textContent = "Ready to dive in? Generating the lesson takes a moment — exercises and a practice scenario follow in the background so you can start reading right away.";
+  text.textContent = t("study.stubText");
   const button = document.createElement("button");
   button.type = "button";
   button.className = "primary-btn stub-generate";
-  button.textContent = "Generate full lesson";
+  button.textContent = t("study.generateFull");
   button.addEventListener("click", () => expandLesson(plan, lesson, button));
   stubCard.append(text, button);
   els.lessonStudyContainer.append(stubCard);
@@ -925,7 +998,7 @@ function buildAlphabetTable(entries) {
   const wrap = document.createElement("section");
   wrap.className = "study-alphabet";
   const heading = document.createElement("h4");
-  heading.textContent = "Reference chart";
+  heading.textContent = t("study.referenceChart");
   wrap.append(heading);
 
   const groups = {};
@@ -949,7 +1022,12 @@ function buildAlphabetTable(entries) {
     }
     const table = document.createElement("table");
     table.className = "alphabet-table";
-    table.innerHTML = `<thead><tr><th>Letter</th><th>IPA</th>${showRomanization ? "<th>Roman.</th>" : ""}<th>Name</th><th>Notes</th></tr></thead>`;
+    table.innerHTML = `<thead><tr><th></th><th></th>${showRomanization ? "<th></th>" : ""}<th></th><th></th></tr></thead>`;
+    const headCells = table.querySelectorAll("th");
+    const headLabels = showRomanization
+      ? ["table.letter", "table.ipa", "table.roman", "table.name", "table.notes"]
+      : ["table.letter", "table.ipa", "table.name", "table.notes"];
+    headLabels.forEach((key, i) => { headCells[i].textContent = t(key); });
     const tbody = document.createElement("tbody");
     for (const entry of groups[groupName]) {
       const row = document.createElement("tr");
@@ -987,7 +1065,9 @@ function buildVocabTable(vocab, headingText) {
   heading.textContent = headingText;
   const table = document.createElement("table");
   table.className = "vocab-table";
-  table.innerHTML = `<thead><tr><th>Word</th><th>IPA</th><th>Translation</th><th>Example</th></tr></thead>`;
+  table.innerHTML = `<thead><tr><th></th><th></th><th></th><th></th></tr></thead>`;
+  ["table.word", "table.ipa", "table.translation", "table.example"]
+    .forEach((key, i) => { table.querySelectorAll("th")[i].textContent = t(key); });
   const tbody = document.createElement("tbody");
   for (const word of vocab) {
     const row = document.createElement("tr");
@@ -1040,7 +1120,7 @@ function buildExerciseCard(plan, lesson, exercise, index) {
   form.className = "exercise-form";
   const input = document.createElement("textarea");
   input.rows = 2;
-  input.placeholder = "Your answer";
+  input.placeholder = t("ex.answerPh");
   input.value = exercise.userAnswer || "";
   input.addEventListener("input", () => {
     exercise.userAnswer = input.value;
@@ -1050,14 +1130,14 @@ function buildExerciseCard(plan, lesson, exercise, index) {
   const checkBtn = document.createElement("button");
   checkBtn.type = "submit";
   checkBtn.className = "primary-btn small";
-  checkBtn.textContent = "Check";
+  checkBtn.textContent = t("ex.check");
   actions.append(checkBtn);
 
   if (exercise.answer) {
     const reveal = document.createElement("button");
     reveal.type = "button";
     reveal.className = "secondary-btn small";
-    reveal.textContent = "Show answer";
+    reveal.textContent = t("ex.showAnswer");
     const answer = document.createElement("p");
     answer.className = "exercise-answer";
     answer.textContent = exercise.answer;
@@ -1065,7 +1145,7 @@ function buildExerciseCard(plan, lesson, exercise, index) {
     reveal.addEventListener("click", () => {
       const showing = answer.style.display !== "none";
       answer.style.display = showing ? "none" : "";
-      reveal.textContent = showing ? "Show answer" : "Hide answer";
+      reveal.textContent = showing ? t("ex.showAnswer") : t("ex.hideAnswer");
     });
     actions.append(reveal);
     form.append(input, actions, answer);
@@ -1077,7 +1157,7 @@ function buildExerciseCard(plan, lesson, exercise, index) {
     const feedback = document.createElement("div");
     feedback.className = `exercise-feedback ${exercise.feedback.ok ? "ok" : "off"}`;
     const label = document.createElement("strong");
-    label.textContent = exercise.feedback.ok ? "Nice." : "Not quite.";
+    label.textContent = exercise.feedback.ok ? t("ex.nice") : t("ex.notQuite");
     const body = document.createElement("span");
     body.textContent = exercise.feedback.text ? ` ${exercise.feedback.text}` : "";
     feedback.append(label, body);
@@ -1103,7 +1183,7 @@ function buildLessonChatPanel(plan, lesson) {
   const panel = document.createElement("section");
   panel.className = "lesson-chat";
   const heading = document.createElement("h4");
-  heading.textContent = "Ask the tutor";
+  heading.textContent = t("tutor.title");
   panel.append(heading);
 
   const list = document.createElement("div");
@@ -1111,7 +1191,7 @@ function buildLessonChatPanel(plan, lesson) {
   if (!lesson.qa.length) {
     const empty = document.createElement("p");
     empty.className = "muted lesson-chat-empty";
-    empty.textContent = "Stuck on something? Ask a question about this lesson — examples, rules, edge cases, anything.";
+    empty.textContent = t("tutor.empty");
     list.append(empty);
   } else {
     for (const message of lesson.qa) {
@@ -1119,7 +1199,7 @@ function buildLessonChatPanel(plan, lesson) {
       row.className = `lesson-chat-msg ${message.role}`;
       const label = document.createElement("span");
       label.className = "lesson-chat-label";
-      label.textContent = message.role === "user" ? "You" : "Tutor";
+      label.textContent = message.role === "user" ? t("tutor.you") : t("tutor.label");
       const body = document.createElement("div");
       body.className = "lesson-chat-body";
       body.textContent = message.content;
@@ -1133,12 +1213,12 @@ function buildLessonChatPanel(plan, lesson) {
   form.className = "lesson-chat-form";
   const input = document.createElement("textarea");
   input.rows = 1;
-  input.placeholder = "How does this rule work with negatives?";
+  input.placeholder = t("tutor.placeholder");
   input.required = true;
   const send = document.createElement("button");
   send.type = "submit";
   send.className = "primary-btn small";
-  send.textContent = "Ask";
+  send.textContent = t("tutor.ask");
   form.append(input, send);
   form.addEventListener("submit", (event) => {
     event.preventDefault();
@@ -1158,12 +1238,12 @@ async function askLessonQuestion(plan, lesson, question, sendBtn) {
   saveState();
   renderLessonStudy(plan, lesson);
   const newSendBtn = els.lessonStudyContainer.querySelector(".lesson-chat-form button");
-  await runWithLoading(newSendBtn || sendBtn, "Asking...", "Tutor is answering", async () => {
+  await runWithLoading(newSendBtn || sendBtn, t("tutor.asking"), t("tutor.answering"), async () => {
     try {
       const reply = await askRoute("chat", buildLessonChatMessages(plan, lesson), 0.5);
       lesson.qa.push(normalizeQa({ role: "tutor", content: reply, createdAt: Date.now() }));
     } catch (error) {
-      lesson.qa.push(normalizeQa({ role: "tutor", content: `Sorry — couldn't reach the model: ${error.message}`, createdAt: Date.now() }));
+      lesson.qa.push(normalizeQa({ role: "tutor", content: t("tutor.error", { message: error.message }), createdAt: Date.now() }));
     } finally {
       saveState();
       renderLessonStudy(plan, lesson);
@@ -1178,7 +1258,7 @@ function buildLessonChatMessages(plan, lesson) {
     `You are a friendly, precise tutor for a ${plan.language} learner at ${plan.level} level.`,
     `The learner is studying this lesson:`,
     lessonText,
-    `Answer questions about THIS lesson clearly. Use English for explanations unless the learner writes in ${plan.language}.`,
+    `Answer questions about THIS lesson clearly. Use ${uiLanguageName()} for explanations unless the learner writes in ${plan.language}.`,
     `Give short, concrete examples in ${plan.language} with translations.`,
     `Keep responses tight: one good explanation beats three. Do not invent extra exercises unless asked.`,
     policy,
@@ -1232,7 +1312,7 @@ function renderSectionRows(lesson) {
   if (!lesson.sections.length) {
     const empty = document.createElement("p");
     empty.className = "muted small-note";
-    empty.textContent = "No sections yet. Add one to start building the lesson body.";
+    empty.textContent = t("edit.noSections");
     els.lessonSectionsContainer.append(empty);
     return;
   }
@@ -1241,19 +1321,19 @@ function renderSectionRows(lesson) {
     card.className = "edit-row section-edit";
     const heading = document.createElement("input");
     heading.type = "text";
-    heading.placeholder = "Section heading";
+    heading.placeholder = t("edit.sectionHeadingPh");
     heading.value = section.heading;
     heading.addEventListener("input", () => { section.heading = heading.value; });
     const body = document.createElement("textarea");
     body.rows = 4;
-    body.placeholder = "Section body — examples, rules, anything";
+    body.placeholder = t("edit.sectionBodyPh");
     body.value = section.body;
     body.addEventListener("input", () => { section.body = body.value; });
     const remove = document.createElement("button");
     remove.type = "button";
     remove.className = "icon-btn small danger-flat";
     remove.textContent = "×";
-    remove.title = "Remove section";
+    remove.title = t("edit.removeSection");
     remove.addEventListener("click", () => {
       lesson.sections = lesson.sections.filter((s) => s.id !== section.id);
       saveState();
@@ -1269,7 +1349,7 @@ function renderVocabEditRows(lesson) {
   if (!lesson.vocab.length) {
     const empty = document.createElement("p");
     empty.className = "muted small-note";
-    empty.textContent = "No vocabulary yet. Add a word and it'll appear in the global Vocab tab too.";
+    empty.textContent = t("edit.noVocab");
     els.lessonVocabRows.append(empty);
     return;
   }
@@ -1277,11 +1357,11 @@ function renderVocabEditRows(lesson) {
     const row = document.createElement("div");
     row.className = "edit-row vocab-edit";
     const fields = [
-      { key: "term", placeholder: "Word", flex: 1 },
-      { key: "translation", placeholder: "Translation", flex: 1 },
-      { key: "ipa", placeholder: "IPA", flex: 0.7 },
-      { key: "pos", placeholder: "Part of speech", flex: 0.8 },
-      { key: "example", placeholder: "Example sentence", flex: 2 }
+      { key: "term", placeholder: t("edit.wordPh"), flex: 1 },
+      { key: "translation", placeholder: t("edit.translationPh"), flex: 1 },
+      { key: "ipa", placeholder: t("edit.ipaPh"), flex: 0.7 },
+      { key: "pos", placeholder: t("edit.posPh"), flex: 0.8 },
+      { key: "example", placeholder: t("edit.examplePh"), flex: 2 }
     ];
     for (const field of fields) {
       const input = document.createElement("input");
@@ -1296,7 +1376,7 @@ function renderVocabEditRows(lesson) {
     remove.type = "button";
     remove.className = "icon-btn small danger-flat";
     remove.textContent = "×";
-    remove.title = "Remove word";
+    remove.title = t("edit.removeWord");
     remove.addEventListener("click", () => {
       lesson.vocab = lesson.vocab.filter((v) => v.id !== entry.id);
       saveState();
@@ -1312,7 +1392,7 @@ function renderExerciseRows(lesson) {
   if (!lesson.exercises.length) {
     const empty = document.createElement("p");
     empty.className = "muted small-note";
-    empty.textContent = "No exercises yet. Add prompts learners should try after reading.";
+    empty.textContent = t("edit.noExercises");
     els.lessonExerciseRows.append(empty);
     return;
   }
@@ -1321,19 +1401,19 @@ function renderExerciseRows(lesson) {
     card.className = "edit-row exercise-edit";
     const prompt = document.createElement("textarea");
     prompt.rows = 2;
-    prompt.placeholder = "Exercise prompt";
+    prompt.placeholder = t("edit.exercisePromptPh");
     prompt.value = exercise.prompt;
     prompt.addEventListener("input", () => { exercise.prompt = prompt.value; });
     const answer = document.createElement("textarea");
     answer.rows = 2;
-    answer.placeholder = "Answer (optional — used to check learner replies)";
+    answer.placeholder = t("edit.exerciseAnswerPh");
     answer.value = exercise.answer;
     answer.addEventListener("input", () => { exercise.answer = answer.value; });
     const remove = document.createElement("button");
     remove.type = "button";
     remove.className = "icon-btn small danger-flat";
     remove.textContent = "×";
-    remove.title = "Remove exercise";
+    remove.title = t("edit.removeExercise");
     remove.addEventListener("click", () => {
       lesson.exercises = lesson.exercises.filter((e) => e.id !== exercise.id);
       saveState();
@@ -1349,7 +1429,7 @@ function renderLessons(plan, activeLesson) {
   if (!plan) {
     const empty = document.createElement("div");
     empty.className = "empty-state";
-    empty.textContent = "Generate a plan or create a blank one to start adding lessons.";
+    empty.textContent = t("lessons.empty");
     els.lessonList.append(empty);
     return;
   }
@@ -1361,7 +1441,7 @@ function renderLessons(plan, activeLesson) {
     if (!lesson.expanded) button.classList.add("stub");
     button.innerHTML = `<strong></strong><span></span>`;
     button.querySelector("strong").textContent = `${index + 1}. ${lesson.title}`;
-    const tag = lesson.expanded ? (lesson.grammar || "Lesson") : "Outline · tap to expand";
+    const tag = lesson.expanded ? (lesson.grammar || t("lesson.fallbackTag")) : t("lesson.outlineTag");
     button.querySelector("span").textContent = tag;
     button.addEventListener("click", () => {
       savePlanEdits();
@@ -1381,16 +1461,16 @@ function renderRoleplaySetup() {
   els.testFocusInput.value = chat?.testFocus || "";
   els.scenarioText.value = chat?.scenarioText || "";
   if (!chat) {
-    els.chatKicker.textContent = "Role-play practice";
-    els.chatTitle.textContent = "Choose a character and scenario";
+    els.chatKicker.textContent = t("chat.kicker");
+    els.chatTitle.textContent = t("chat.choose");
     return;
   }
   const character = chatCharacter(chat);
   const scenario = chatScenario(chat);
-  els.chatKicker.textContent = `${chat.language} - ${chat.difficulty}`;
+  els.chatKicker.textContent = `${chat.language} - ${difficultyLabel(chat.difficulty)}`;
   els.chatTitle.textContent = chat.title && chat.title !== "New chat"
-    ? `${character?.name || "Character"} - ${chat.title}`
-    : `${character?.name || "Character"} - ${scenario?.title || "Scenario"}`;
+    ? `${character?.name || t("chat.characterFallback")} - ${chat.title}`
+    : `${character?.name || t("chat.characterFallback")} - ${scenario?.title || t("chat.scenarioFallback")}`;
 }
 
 function renderChatTabs() {
@@ -1400,7 +1480,7 @@ function renderChatTabs() {
   const newBtn = document.createElement("button");
   newBtn.type = "button";
   newBtn.className = "chat-tab chat-tab-new";
-  newBtn.textContent = "+ New chat";
+  newBtn.textContent = t("chat.newTab");
   newBtn.addEventListener("click", () => {
     createChat({});
     saveState();
@@ -1417,17 +1497,17 @@ function renderChatTabs() {
     if (chat.id === state.currentChatId) tab.classList.add("active");
     const label = document.createElement("span");
     label.className = "chat-tab-label";
-    label.textContent = chat.title || "Untitled";
+    label.textContent = chat.title || t("chat.untitled");
     const meta = document.createElement("em");
     meta.className = "chat-tab-meta";
     meta.textContent = chat.language;
     const del = document.createElement("span");
     del.className = "chat-tab-del";
     del.textContent = "×";
-    del.title = "Delete chat";
+    del.title = t("chat.deleteTitle");
     del.addEventListener("click", (event) => {
       event.stopPropagation();
-      if (!confirm(`Delete chat "${chat.title}"?`)) return;
+      if (!confirm(t("confirm.deleteChat", { title: chat.title }))) return;
       deleteChat(chat.id);
       saveState();
       renderChatTabs();
@@ -1465,7 +1545,7 @@ function renderMessages() {
   if (!messages.length) {
     const empty = document.createElement("div");
     empty.className = "empty-state";
-    empty.textContent = "Start a role-play, answer in your target language, and Linguini will keep corrections short and useful.";
+    empty.textContent = t("chat.empty");
     els.messages.append(empty);
     return;
   }
@@ -1474,12 +1554,15 @@ function renderMessages() {
     row.className = `message ${message.role}`;
     const avatar = document.createElement("div");
     avatar.className = "avatar";
-    avatar.textContent = message.role === "user" ? "You" : message.role === "correction" ? "Tip" : initials(message.name || "Lg");
+    avatar.textContent = message.role === "user" ? t("chat.you") : message.role === "correction" ? t("chat.tip") : initials(message.name || "Lg");
     const bubble = document.createElement("div");
     bubble.className = "bubble";
     const header = document.createElement("header");
     const name = document.createElement("strong");
-    name.textContent = message.name;
+    name.textContent = message.role === "user" ? t("chat.you")
+      : message.role === "correction" ? t("chat.learningNote")
+      : message.role === "system" ? t("chat.system")
+      : message.name;
     const time = document.createElement("span");
     time.textContent = new Date(message.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
     header.append(name, time);
@@ -1555,22 +1638,20 @@ function renderVocabBank() {
     : items;
 
   els.vocabCountLabel.textContent = vocabSearch
-    ? `${filtered.length} of ${items.length} words`
-    : `${items.length} words across ${state.plans.length} plan${state.plans.length === 1 ? "" : "s"}`;
+    ? t("vocab.countFiltered", { shown: filtered.length, total: items.length })
+    : t(state.plans.length === 1 ? "vocab.countOne" : "vocab.countMany", { count: items.length, plans: state.plans.length });
 
   if (!filtered.length) {
     const empty = document.createElement("div");
     empty.className = "empty-state";
-    empty.textContent = items.length
-      ? "No words match that search."
-      : "Vocab you add to any lesson will land here.";
+    empty.textContent = items.length ? t("vocab.noMatch") : t("vocab.emptyBank");
     els.vocabBankList.append(empty);
     return;
   }
 
   const groups = {};
   for (const item of filtered) {
-    const key = (item.source === "lesson" ? item.plan.language : item.word.language) || "Other";
+    const key = (item.source === "lesson" ? item.plan.language : item.word.language) || t("vocab.other");
     (groups[key] = groups[key] || []).push(item);
   }
 
@@ -1583,7 +1664,9 @@ function renderVocabBank() {
 
     const table = document.createElement("table");
     table.className = "vocab-table";
-    table.innerHTML = `<thead><tr><th>Word</th><th>IPA</th><th>Translation</th><th>Example</th><th>From</th><th></th></tr></thead>`;
+    table.innerHTML = `<thead><tr><th></th><th></th><th></th><th></th><th></th><th></th></tr></thead>`;
+    ["table.word", "table.ipa", "table.translation", "table.example", "table.from"]
+      .forEach((key, i) => { table.querySelectorAll("th")[i].textContent = t(key); });
     const tbody = document.createElement("tbody");
     for (const item of entries) {
       const { word, plan, lesson, source } = item;
@@ -1613,16 +1696,16 @@ function renderVocabBank() {
       } else {
         const tag = document.createElement("span");
         tag.className = "vocab-source-tag";
-        tag.textContent = "Saved";
+        tag.textContent = t("vocab.savedTag");
         c5.append(tag);
       }
       const del = document.createElement("button");
       del.type = "button";
       del.className = "icon-btn small danger-flat";
       del.textContent = "×";
-      del.title = "Delete word";
+      del.title = t("vocab.deleteWord");
       del.addEventListener("click", () => {
-        if (!confirm(`Delete "${word.term}"?`)) return;
+        if (!confirm(t("confirm.delete", { title: word.term }))) return;
         if (source === "saved") {
           state.savedWords = state.savedWords.filter((w) => w.id !== word.id);
         } else {
@@ -1713,7 +1796,7 @@ function savePlanEdits() {
 
 async function generatePlan() {
   saveState();
-  await runWithLoading(els.generatePlanBtn, "Generating plan...", "Generating plan", async () => {
+  await runWithLoading(els.generatePlanBtn, t("busy.generatingPlan"), t("task.generatingPlan"), async () => {
     try {
       const language = els.languageSelect.value;
       const level = els.levelSelect.value;
@@ -1743,7 +1826,7 @@ async function generatePlan() {
       saveState();
       render();
     } catch (error) {
-      alert(`Plan generation failed.\n\n${error.message}`);
+      alert(t("alert.planFailed", { message: error.message }));
     }
   });
 }
@@ -1766,19 +1849,20 @@ function planOutlineSystemPrompt(language, level) {
     '  - "notes": optional brief learner-facing notes about the plan',
     "Order lessons so each builds on prior ones. No duplicates. Do not include intros, sections, exercises, or scenarios; those are generated later.",
     "Keep JSON valid. No trailing commas. No code fences.",
-    scriptPolicy(language, level)
+    scriptPolicy(language, level),
+    uiLanguageDirective()
   ].filter(Boolean).join("\n");
 }
 
 const generatingPractice = new Set();
 
 async function expandLesson(plan, lesson, button) {
-  await runWithLoading(button, "Writing lesson...", `Writing ${lesson.title}`, async () => {
+  await runWithLoading(button, t("busy.writingLesson"), t("task.writingLesson", { title: lesson.title }), async () => {
     try {
       const fresh = await requestLessonContent(plan, lesson);
       applyLessonContent(plan, lesson, fresh);
     } catch (error) {
-      alert(`Could not write the lesson.\n\n${error.message}`);
+      alert(t("alert.lessonWriteFailed", { message: error.message }));
       return;
     }
   });
@@ -1816,18 +1900,18 @@ async function regenerateLesson() {
   if (!lesson.expanded) {
     return expandLesson(plan, lesson, els.regenerateLessonBtn);
   }
-  const refinement = prompt("Any changes for this lesson? (Leave blank to just rewrite with the same description.)");
+  const refinement = prompt(t("prompt.refinement"));
   if (refinement === null) return;
   const refine = refinement.trim();
   // Two-phase regen — lesson route first, then practice route once content is rendered.
   let contentOk = false;
-  await runWithLoading(els.regenerateLessonBtn, "Rewriting...", `Rewriting ${lesson.title}`, async () => {
+  await runWithLoading(els.regenerateLessonBtn, t("busy.rewriting"), t("task.rewriting", { title: lesson.title }), async () => {
     try {
       const fresh = await requestLessonContent(plan, lesson, refine);
       applyLessonContent(plan, lesson, fresh);
       contentOk = true;
     } catch (error) {
-      alert(`Could not regenerate the lesson.\n\n${error.message}`);
+      alert(t("alert.lessonRegenFailed", { message: error.message }));
     }
   });
   if (contentOk) {
@@ -1881,7 +1965,7 @@ function applyLessonContent(plan, lesson, parsed) {
 async function generatePracticeForLesson(plan, lesson) {
   if (generatingPractice.has(lesson.id)) return;
   generatingPractice.add(lesson.id);
-  pushLoading(`Building exercises & scenario for ${lesson.title}`);
+  pushLoading(t("task.buildingPractice", { title: lesson.title }));
   if (currentLesson()?.id === lesson.id) renderLessonStudy(plan, lesson);
   try {
     const reply = await askRoute("practice", [
@@ -1981,7 +2065,8 @@ function lessonContentSystemPrompt(language, level) {
     "Do not include outline-only placeholders. Every field must be substantive.",
     "Keep JSON valid. No trailing commas.",
     scriptPolicy(language, level),
-    pedagogyPolicy(state.pedagogyStyle)
+    pedagogyPolicy(state.pedagogyStyle),
+    uiLanguageDirective()
   ].filter(Boolean).join("\n");
 }
 
@@ -2000,7 +2085,8 @@ function lessonPracticeSystemPrompt(language, level) {
     "  - details: 2-3 sentences setting the scene, the character's role, and what the learner needs to accomplish using THIS lesson's grammar concept and at least 3 of its vocabulary words.",
     "Keep JSON valid. No trailing commas.",
     scriptPolicy(language, level),
-    pedagogyPolicy(state.pedagogyStyle)
+    pedagogyPolicy(state.pedagogyStyle),
+    uiLanguageDirective()
   ].filter(Boolean).join("\n");
 }
 
@@ -2008,11 +2094,11 @@ async function generateLesson() {
   const plan = currentPlan();
   if (!plan) return;
   savePlanEdits();
-  const topic = prompt("What concept should this new lesson teach? Leave blank to let the tutor pick the next logical lesson.");
+  const topic = prompt(t("prompt.newLessonTopic"));
   if (topic === null) return;
   const cleanTopic = topic.trim();
   let createdLesson = null;
-  await runWithLoading(els.generateLessonBtn, "Writing lesson...", "Writing lesson", async () => {
+  await runWithLoading(els.generateLessonBtn, t("busy.writingLesson"), t("task.writingNewLesson"), async () => {
     try {
       const existingTitles = plan.lessons.map((l, i) => `${i + 1}. ${l.title}`).join("\n");
       const userMsg = cleanTopic
@@ -2030,14 +2116,14 @@ async function generateLesson() {
       saveState();
       render();
     } catch (error) {
-      alert(`Lesson generation failed.\n\n${error.message}`);
+      alert(t("alert.lessonGenFailed", { message: error.message }));
     }
   });
   if (createdLesson) generatePracticeForLesson(plan, createdLesson);
 }
 
 async function checkExerciseAnswer(plan, lesson, exercise, button) {
-  await runWithLoading(button, "Checking...", "Checking your answer", async () => {
+  await runWithLoading(button, t("busy.checking"), t("task.checking"), async () => {
     try {
       const reply = await askRoute("correction", [
         { role: "system", content: exerciseCheckSystemPrompt(plan.language, plan.level) },
@@ -2053,12 +2139,12 @@ async function checkExerciseAnswer(plan, lesson, exercise, button) {
         exercise.feedback = { ok: true, text: trimmed.split(/\r?\n/).slice(1).join(" ").trim() };
       } else {
         const body = trimmed.replace(/^WRONG[:\s]*/i, "").trim();
-        exercise.feedback = { ok: false, text: body || "Try again — review the lesson and re-attempt." };
+        exercise.feedback = { ok: false, text: body || t("ex.tryAgain") };
       }
       saveState();
       renderLessonStudy(plan, lesson);
     } catch (error) {
-      exercise.feedback = { ok: false, text: `Couldn't reach the checker: ${error.message}` };
+      exercise.feedback = { ok: false, text: t("ex.checkerError", { message: error.message }) };
       saveState();
       renderLessonStudy(plan, lesson);
     }
@@ -2075,7 +2161,8 @@ function exerciseCheckSystemPrompt(language, level) {
     "If a reference answer is provided, use it as guidance but allow synonyms and natural variation.",
     "Keep feedback friendly and concrete. No moralising. No extra commentary.",
     scriptPolicy(language, level),
-    pedagogyPolicy(state.pedagogyStyle)
+    pedagogyPolicy(state.pedagogyStyle),
+    uiLanguageDirective()
   ].filter(Boolean).join("\n");
 }
 
@@ -2166,7 +2253,7 @@ async function sendMessage(event) {
   chat.updatedAt = Date.now();
   els.messageInput.value = "";
   renderMessages();
-  await runWithLoading(els.sendBtn, "Sending...", `${character?.name || "Character"} is replying`, async () => {
+  await runWithLoading(els.sendBtn, t("chat.sending"), t("chat.replying", { name: character?.name || t("chat.characterFallback") }), async () => {
     try {
       const reply = await askRoute("chat", [
         { role: "system", content: roleplaySystemPrompt(character, chat) },
@@ -2183,7 +2270,7 @@ async function sendMessage(event) {
       saveState();
       renderMessages();
     } catch (error) {
-      chat.messages.push({ role: "system", name: "System", content: `Connection problem: ${error.message}`, createdAt: Date.now() });
+      chat.messages.push({ role: "system", name: "System", content: t("chat.connectionProblem", { message: error.message }), createdAt: Date.now() });
       renderMessages();
     }
   });
@@ -2204,7 +2291,10 @@ function roleplaySystemPrompt(character, chat) {
     "Do not put grammar correction in the chat reply unless the learner directly asks; a separate checker handles corrections.",
     "Use natural target-language input with just enough scaffolding for the selected level.",
     scriptPolicy(chat.language, els.levelSelect.value),
-    pedagogyPolicy(state.pedagogyStyle)
+    pedagogyPolicy(state.pedagogyStyle),
+    state.uiLanguage !== "en"
+      ? `Stay in ${chat.language} for all in-character dialogue. If you add any parenthetical guidance, translations, or meta commentary, write it in ${uiLanguageName()}.`
+      : ""
   ].filter(Boolean).join("\n");
 }
 
@@ -2232,7 +2322,10 @@ function correctionSystemPrompt(chat) {
     "If there is an error, write 1-3 concise bullets: corrected phrase, what was wrong, and a tiny reusable rule.",
     "Do not continue the role-play.",
     scriptPolicy(language, level),
-    pedagogyPolicy(state.pedagogyStyle)
+    pedagogyPolicy(state.pedagogyStyle),
+    state.uiLanguage !== "en"
+      ? `Write the correction bullets in ${uiLanguageName()}, keeping corrected target-language phrases in ${language}. Still reply exactly \"No correction needed.\" in English when there is nothing to correct.`
+      : ""
   ].filter(Boolean).join("\n");
 }
 
@@ -2265,13 +2358,24 @@ async function askRoute(kind, messages, temperature, maxTokens) {
     body = { model: route.model, temperature, messages };
     if (maxTokens) body.max_tokens = maxTokens;
   }
-  const response = await fetch(proxyEndpointFor(route.endpoint), {
+  const target = proxyEndpointFor(route.endpoint);
+  const proxied = target.startsWith("/api/chat");
+  const headers = { "Content-Type": "application/json" };
+  if (proxied) {
+    // A proxy (server.py, the Android local server, or the Cloudflare Function)
+    // translates these pseudo-headers into real provider auth headers.
+    headers["X-LLM-Auth-Style"] = authStyle;
+    if (route.apiKey) headers["X-LLM-API-Key"] = route.apiKey;
+  } else if (anthropic) {
+    headers["anthropic-version"] = "2023-06-01";
+    headers["anthropic-dangerous-direct-browser-access"] = "true";
+    if (route.apiKey) headers["x-api-key"] = route.apiKey;
+  } else if (route.apiKey) {
+    headers["Authorization"] = `Bearer ${route.apiKey}`;
+  }
+  const response = await fetch(target, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-LLM-Auth-Style": authStyle,
-      ...(route.apiKey ? { "X-LLM-API-Key": route.apiKey } : {})
-    },
+    headers,
     body: JSON.stringify(body)
   });
   if (!response.ok) {
@@ -2294,11 +2398,12 @@ async function askRoute(kind, messages, temperature, maxTokens) {
     let host = route.endpoint;
     try { host = new URL(route.endpoint).host; } catch {}
     const provider = anthropic ? "Anthropic" : "OpenAI-compatible";
-    const label = ROUTE_LABELS[kind] || kind;
-    throw new Error(
-      `Empty response on the "${label}" route (${provider} format, host ${host}, model ${route.model}). ` +
-      `Each of the 5 routes has its own endpoint/model — check that this one is configured for the model you intended.`
-    );
+    throw new Error(t("error.emptyResponse", {
+      label: t(`route.${kind}`),
+      provider,
+      host,
+      model: route.model
+    }));
   }
   return content.trim();
 }
@@ -2306,17 +2411,23 @@ async function askRoute(kind, messages, temperature, maxTokens) {
 function proxyEndpointFor(endpoint) {
   try {
     const url = new URL(endpoint, window.location.href);
-    const appHost = window.location.hostname;
-    const isAppLocalServer = ["127.0.0.1", "localhost", "::1"].includes(appHost);
-    const isDifferentServer = url.host !== window.location.host;
-    const isLocalModel = ["127.0.0.1", "localhost", "::1"].includes(url.hostname);
-    if (isLocalModel || (isAppLocalServer && isDifferentServer)) {
-      return `/api/chat?target=${encodeURIComponent(url.toString())}`;
+    const isLocalModel = LOCAL_HOSTS.includes(url.hostname);
+    if (HAS_STATE_SERVER) {
+      // Dev server / Android WebView: the local server proxies anything
+      // off-origin (local models AND remote providers).
+      if (isLocalModel || url.host !== window.location.host) {
+        return `/api/chat?target=${encodeURIComponent(url.toString())}`;
+      }
+      return endpoint;
     }
+    // Hosted (Cloudflare Pages): the Function can't reach the user's own
+    // 127.0.0.1, so local model endpoints go direct from the browser
+    // (localhost is a trustworthy origin — enable CORS in LM Studio).
+    // Remote providers go through the Function to avoid CORS trouble.
+    return isLocalModel ? endpoint : `/api/chat?target=${encodeURIComponent(url.toString())}`;
   } catch {
     return endpoint;
   }
-  return endpoint;
 }
 
 function cleanReply(text, name) {
@@ -2372,7 +2483,7 @@ function addLesson() {
 
 function deleteCurrentPlan() {
   const plan = currentPlan();
-  if (!plan || !confirm(`Delete "${plan.title}"?`)) return;
+  if (!plan || !confirm(t("confirm.delete", { title: plan.title }))) return;
   state.plans = state.plans.filter((item) => item.id !== plan.id);
   state.currentPlanId = state.plans[0]?.id || "";
   activeLessonId = state.plans[0]?.lessons[0]?.id || "";
@@ -2383,7 +2494,7 @@ function deleteCurrentPlan() {
 function deleteCurrentLesson() {
   const plan = currentPlan();
   const lesson = currentLesson();
-  if (!plan || !lesson || !confirm(`Delete "${lesson.title}"?`)) return;
+  if (!plan || !lesson || !confirm(t("confirm.delete", { title: lesson.title }))) return;
   plan.lessons = plan.lessons.filter((item) => item.id !== lesson.id);
   activeLessonId = plan.lessons[0]?.id || "";
   saveState();
@@ -2452,7 +2563,7 @@ function newCharacter() {
 
 function deleteCharacter() {
   const character = currentCharacter();
-  if (!character || state.characters.length <= 1 || !confirm(`Delete "${character.name}"?`)) return;
+  if (!character || state.characters.length <= 1 || !confirm(t("confirm.delete", { title: character.name }))) return;
   state.characters = state.characters.filter((item) => item.id !== character.id);
   activeCharacterId = state.characters[0].id;
   saveState();
@@ -2461,7 +2572,7 @@ function deleteCharacter() {
 
 function saveScenario() {
   const current = currentScenario();
-  const title = prompt("Scenario name", current?.id === "custom" ? "" : current?.title);
+  const title = prompt(t("prompt.scenarioName"), current?.id === "custom" ? "" : current?.title);
   if (!title) return;
   const scenario = {
     id: current?.id === "custom" ? cryptoId("scenario") : current.id,
@@ -2478,17 +2589,46 @@ function saveScenario() {
 }
 
 async function testConnection() {
-  await runWithLoading(els.testConnectionBtn, "Testing...", "Testing chat route", async () => {
+  await runWithLoading(els.testConnectionBtn, t("busy.testing"), t("task.testing"), async () => {
     try {
       await askRoute("chat", [
         { role: "system", content: "Reply with exactly: connection ok" },
         { role: "user", content: "test" }
       ], 0);
-      alert("Connection ok.");
+      alert(t("alert.connectionOk"));
     } catch (error) {
-      alert(`Connection failed.\n\n${error.message}`);
+      alert(t("alert.connectionFailed", { message: error.message }));
     }
   });
+}
+
+async function accountAuth(mode) {
+  if (!LinguiniSync.isConfigured()) {
+    renderAccountPanel();
+    return;
+  }
+  const email = els.accountEmailInput?.value.trim();
+  const password = els.accountPasswordInput?.value;
+  if (!email || !password) {
+    els.accountEmailInput?.focus();
+    return;
+  }
+  els.accountStatus.textContent = t("account.working");
+  try {
+    if (mode === "signup") {
+      const gotSession = await LinguiniSync.signUp(email, password);
+      if (!gotSession) await LinguiniSync.signIn(email, password);
+    } else {
+      await LinguiniSync.signIn(email, password);
+    }
+    els.accountPasswordInput.value = "";
+    // First-login merge: an existing remote row wins; otherwise push local up.
+    const row = await pullRemoteState();
+    if (!row) LinguiniSync.push(state);
+    render();
+  } catch (error) {
+    els.accountStatus.textContent = error.message;
+  }
 }
 
 function switchView(viewId) {
@@ -2533,6 +2673,25 @@ function bindEvents() {
   els.languageSelect.addEventListener("change", saveState);
   els.levelSelect.addEventListener("change", saveState);
   els.pedagogyStyleSelect?.addEventListener("change", saveState);
+  els.uiLanguageSelect?.addEventListener("change", () => {
+    saveState();
+    refreshLocale();
+    render();
+  });
+  els.accountSignInBtn?.addEventListener("click", () => accountAuth("signin"));
+  els.accountSignUpBtn?.addEventListener("click", () => accountAuth("signup"));
+  els.accountSignOutBtn?.addEventListener("click", async () => {
+    await LinguiniSync.signOut();
+    renderAccountPanel();
+  });
+  document.addEventListener("visibilitychange", () => {
+    if (!LinguiniSync.isSignedIn()) return;
+    if (document.visibilityState === "hidden") {
+      LinguiniSync.flushPush(state);
+    } else if (Date.now() - LinguiniSync.lastPullAt() > 60000) {
+      pullRemoteState().catch(() => {});
+    }
+  });
   els.generatePlanBtn.addEventListener("click", generatePlan);
   els.newPlanBtn.addEventListener("click", newPlan);
   els.addLessonBtn.addEventListener("click", addLesson);
@@ -2600,7 +2759,7 @@ function bindEvents() {
   els.saveRoutesBtn?.addEventListener("click", () => {
     saveState();
     if (els.saveRoutesStatus) {
-      els.saveRoutesStatus.textContent = "Saved ✓";
+      els.saveRoutesStatus.textContent = t("models.saved");
       setTimeout(() => { if (els.saveRoutesStatus) els.saveRoutesStatus.textContent = ""; }, 1800);
     }
   });
@@ -2627,6 +2786,17 @@ function bindEvents() {
 (async function init() {
   bindEvents();
   populateRoutePresets();
+  refreshLocale();
   await hydrateStateFromServer();
+  if (LinguiniSync.isSignedIn()) {
+    try {
+      const row = await LinguiniSync.pull();
+      if (row) applyRemoteState(row);
+    } catch {
+      // Offline or Supabase unreachable — localStorage state stands.
+    }
+  }
+  // The hydrate/pull overlay may have brought a different UI language.
+  refreshLocale();
   render();
 })();
