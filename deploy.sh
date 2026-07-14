@@ -14,6 +14,10 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
+# wrangler needs Node >= 22; the default /usr/local/bin/node here is v20,
+# so prefer Homebrew's newer node when it exists.
+[ -d /opt/homebrew/bin ] && export PATH="/opt/homebrew/bin:$PATH"
+
 rm -rf dist
 mkdir dist
 cp index.html styles.css app.js i18n.js sync.js dist/
