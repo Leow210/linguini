@@ -9,8 +9,8 @@
  * Both are safe to commit and ship publicly — the anon key only grants what
  * row-level security allows, i.e. each signed-in user sees their own row.
  */
-const SUPABASE_URL = "";      // e.g. "https://abcdefgh.supabase.co"
-const SUPABASE_ANON_KEY = ""; // the long "anon / public" key
+const SUPABASE_URL = "https://smwznlvvbwfteekjicnc.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_431ZFWk0L1MPyiTLqj2caA_TBDGGFS-";
 
 const SYNC_SESSION_KEY = "linguini-session-v1";
 
