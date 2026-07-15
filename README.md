@@ -37,6 +37,11 @@ Five independent LLM routes — plan outline, lesson body, quiz/scenario, role-p
 - **i18n at 310 keys × 6 locales**, dictionary-driven with scripted completeness checks.
 - **Android.** A WebView wrapper bundles the same web files into an APK, with a small in-process Java HTTP server standing in for `server.py` (persistence via SharedPreferences, same LLM proxy contract).
 
+## Deeper technical docs
+
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — runtime targets, the state→render model, the LLM pipeline (routes, proxy inversion, wire-format translation, JSON repair), the prompt system, and i18n.
+- [docs/DATA-AND-SYNC.md](docs/DATA-AND-SYNC.md) — the state document and normalizers, the three persistence tiers, the Supabase sync protocol, and failure modes.
+
 ## Run it locally
 
 ```sh
