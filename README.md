@@ -22,7 +22,7 @@ Most language apps flatten everything to one level: grammar gets oversimplified,
 
 ## Bring your own model
 
-Five independent LLM routes — plan outline, lesson body, quiz/scenario, role-play chat, error checking — each pointing at any provider: Claude, OpenAI, Gemini, DeepSeek, Kimi, OpenRouter, or a local LM Studio / Ollama instance. Heavy lifting can go to a strong model while per-message correction runs on something small and fast.
+Five independent LLM routes — plan outline, lesson body, quiz/scenario, role-play chat, error checking — each pointing at any provider: Claude, OpenAI, Gemini, DeepSeek, Kimi, Z.ai (GLM), OpenRouter, or a local LM Studio / Ollama instance. Heavy lifting can go to a strong model while per-message correction runs on something small and fast.
 
 ## Technical highlights
 

@@ -43,7 +43,8 @@ const PROVIDER_PRESETS = [
   { id: "openrouter", label: "OpenRouter", endpoint: "https://openrouter.ai/api/v1/chat/completions", model: "anthropic/claude-opus-4-7" },
   { id: "google", label: "Google Gemini (OpenAI compat)", endpoint: "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", model: "gemini-2.0-pro" },
   { id: "deepseek", label: "DeepSeek", endpoint: "https://api.deepseek.com/v1/chat/completions", model: "deepseek-chat" },
-  { id: "kimi", label: "Kimi / Moonshot", endpoint: "https://api.moonshot.ai/v1/chat/completions", model: "moonshot-v1-32k" }
+  { id: "kimi", label: "Kimi / Moonshot", endpoint: "https://api.moonshot.ai/v1/chat/completions", model: "moonshot-v1-32k" },
+  { id: "zai", label: "Z.ai (GLM)", endpoint: "https://api.z.ai/api/paas/v4/chat/completions", model: "glm-5.2" }
 ];
 
 const defaultCharacters = [

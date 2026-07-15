@@ -62,7 +62,7 @@ The four workspace views are plain `<section class="view">` elements toggled by 
 
 ### Five routes
 
-`state.routes` holds five independent route configs — `planner`, `lesson`, `practice`, `chat`, `correction` — each `{ endpoint, model, apiKey }`. The Models tab edits them; presets fill endpoint + default model for LM Studio, OpenAI, Anthropic, OpenRouter, Gemini (OpenAI-compat endpoint), DeepSeek, and Kimi. The split exists so the expensive work (lesson bodies) can run on a strong model while high-frequency work (per-message correction) runs on something small or local.
+`state.routes` holds five independent route configs — `planner`, `lesson`, `practice`, `chat`, `correction` — each `{ endpoint, model, apiKey }`. The Models tab edits them; presets fill endpoint + default model for LM Studio, OpenAI, Anthropic, OpenRouter, Gemini (OpenAI-compat endpoint), DeepSeek, Kimi, and Z.ai (GLM). The split exists so the expensive work (lesson bodies) can run on a strong model while high-frequency work (per-message correction) runs on something small or local.
 
 ### One entry point: `askRoute(kind, messages, temperature, maxTokens)`
 
